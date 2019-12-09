@@ -29,16 +29,6 @@ RWO version components:
   * Alpine Console
     * Management Console
 
-
-Future Releases:
-
-  * Hashicorp Consul
-    * Highly available Key/Value Store Service
-  * MariaDB/Galera
-    * Highly available SQL Service
-  * Auto Proxy
-    * Will help automatically detect outbound connection type, (NAT, Proxy or Direct)
-
 ## Installation
 
 There are two installation methods:

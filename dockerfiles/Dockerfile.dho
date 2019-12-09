@@ -1,0 +1,19 @@
+FROM docker:19.03.0-dind
+MAINTAINER Bryan J Rodriguez <bryan.j.rodriguez@intel.com>
+
+RUN set -x \
+	&& apk add --no-cache \
+		bash \
+		coreutils \
+		dmidecode \
+		dumb-init \
+		lshw \
+		pciutils \
+		util-linux
+
+COPY dho/ /opt/rwo/dho/
+
+WORKDIR /
+
+ENTRYPOINT ["dumb-init"]
+CMD ["/opt/rwo/dho/dho-init.sh"]

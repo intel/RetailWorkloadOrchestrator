@@ -1,0 +1,11 @@
+version: "3.3"
+volumes:
+  vol16:
+    driver: hub.docker.intel.com/rrp/plugin-gluster:client
+    driver_opts: {}
+services:
+  debian:
+    image: debian
+    command: "touch /mnt/hello.txt"
+    volumes:
+      - vol16:/mnt/

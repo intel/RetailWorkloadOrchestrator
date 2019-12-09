@@ -1,0 +1,6 @@
+#!/bin/sh
+
+/opt/rwo/serf/handlers/bin/./memberfailed
+
+# serf/handlers/member-failed
+

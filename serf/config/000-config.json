@@ -1,0 +1,6 @@
+{
+    "discover" : "0conf",
+    "event_handlers" : [
+        "/opt/rwo/serf/handlers/default.sh"
+    ]
+}

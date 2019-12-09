@@ -1,0 +1,73 @@
+package main
+
+import (
+	"fmt"
+	"rwogluster"
+	"os"
+
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	restURL = "http://admin:password@127.0.0.1:5000"
+	client  *rwogluster.Client
+)
+
+func listVolumes() {
+	//	List Volume
+	vols, _ := client.ListVolumes()
+	for _, v := range vols {
+		fmt.Println(v)
+	}
+
+}
+
+func logInit() {
+	var log = logrus.New()
+	Formatter := new(logrus.TextFormatter)
+	Formatter.TimestampFormat = "02-01-2006 15:04:05"
+	Formatter.FullTimestamp = true
+	logrus.SetFormatter(Formatter)
+	log.SetLevel(logrus.DebugLevel)
+	log.SetOutput(os.Stdout)
+}
+
+func main() {
+
+	// Create  a new client
+	client = rwogluster.NewClient(restURL)
+
+	// Get peers
+	fmt.Println(client.GetPeers())
+
+	listVolumes()
+
+	// create volume
+	vol := rwogluster.GlusterVolume{
+		Name:    "s3",
+		Replica: 1,
+		Bricks:  []string{"10.223.97.5:/mnt/pv"},
+	}
+
+	fmt.Println(client.CreateGlusterVolume(vol))
+
+	listVolumes()
+
+	fmt.Println(client.StartVolume("sample"))
+
+	listVolumes()
+
+	fmt.Println(client.StopVolume("sample"))
+
+	fmt.Println(client.AddBrick("sample", "10.223.97.5:/mnt/brk1", 1, 2))
+	fmt.Println(client.RemoveBrick("sample", "10.223.97.5:/mnt/brk1", 1))
+	/*
+		vols, _ = client.ListVolumes()
+		fmt.Println(vols)
+
+		fmt.Println(client.RemoveBrick("sample", "10.223.97.5:/mnt/brk1", 1))
+	*/
+
+	// fmt.Println(client.RemoveVolume(vol.Name))
+
+}

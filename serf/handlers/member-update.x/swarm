@@ -1,0 +1,7 @@
+#!/bin/sh
+echo "******** Running serf swarm update ********"
+until docker system info >/dev/null; do
+    sleep 1
+done
+./opt/rwo/serf/handlers/bin/memberupdateswarm
+# serf/handlers/member-update.x/swarm

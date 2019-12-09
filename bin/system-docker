@@ -1,0 +1,2 @@
+#!/bin/sh
+docker -H unix:///var/run/system-docker.sock "$@"

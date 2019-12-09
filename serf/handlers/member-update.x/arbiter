@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "******** Running serf arbiter update ********"
+/opt/rwo/serf/handlers/bin/./handlearbiter
+# serf/handlers/member-update.x/arbiter

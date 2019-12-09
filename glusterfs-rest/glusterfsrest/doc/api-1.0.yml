@@ -1,0 +1,404 @@
+apis:
+# -----------------------------------------------------------------------------
+# Create Gluster Volume
+# -----------------------------------------------------------------------------
+    - title: Create Gluster Volume
+      auth: true
+      url: volume/:name
+      category: volume
+      method: POST
+      params:
+        - name: bricks
+          type: string
+          required: true
+          example: "bricksserver1:/exports/bricks/b1"
+          desc: Comma seperated Brick paths
+
+        - name: replica
+          type: int
+          required: false
+          example: 1
+          desc: Replica Count
+          default: 0
+
+        - name: stripe
+          type: int
+          required: false
+          example: 1
+          desc: Stripe Count
+          default: 0
+
+        - name: transport
+          type: int
+          required: false
+          example: tcp
+          desc: Transport Type, available types "tcp", "rdma", "tcp,rdma"
+          default: tcp
+
+        - name: force
+          type: int
+          required: false
+          example: 1
+          desc: Volume create force
+          default: 0
+
+        - name: start
+          type: int
+          required: false
+          example: 1
+          desc: Start volume after create
+          default: 0
+      example: |
+
+        curl -X POST http://admin:secret123@localhost:9000/api/1.0/volume/gv1 -d \
+        "bricks=bricksserver1:/exports/bricks/b1,bricksserver2:/exports/bricks/b2&start=1&replica=2"
+
+      response: |
+
+        Success example:
+        {
+            "data": true,
+            "ok": true
+        }
+
+        Failure example:
+
+        {
+            "error": "volume create: gv1: failed: Volume gv1 already exists",
+            "ok": false
+        }
+
+# -----------------------------------------------------------------------------
+# Delete Gluster Volume
+# -----------------------------------------------------------------------------
+    - title: Delete gluster Volume
+      auth: true
+      url: volume/:name
+      category: volume
+      method: DELETE
+      params:
+        - name: stop
+          type: int
+          required: false
+          desc: Stop volume before delete
+          example: 1
+          default: 0
+      example: |
+
+        curl -X DELETE http://admin:secret123@localhost:9000/api/1.0/volume/gv1
+
+      response: |
+
+        Success example:
+        {
+          "data": true,
+          "ok": true
+        }
+
+        Failure example:
+        {
+          "error": "volume delete: gv1: failed: Volume gv1 does not exist",
+          "ok": false
+        }
+
+# -----------------------------------------------------------------------------
+# Start Gluster Volume
+# -----------------------------------------------------------------------------
+    - url: volume/:name/start
+      auth: true
+      title: Start gluster Volume
+      category: volume
+      method: PUT
+      params:
+        - name: force
+          type: int
+          required: false
+          desc: Start volume with force option
+          example: 1
+          default: 0
+      example: |
+
+        curl -X PUT http://admin:secret123@localhost:9000/api/1.0/volume/gv1/start
+      response: |
+
+        Success example:
+        {
+          "data": true,
+          "ok": true
+        }
+
+        Failure example:
+        {
+          "error": "volume start: gv1: failed: Volume gv1 does not exist",
+          "ok": false
+        }
+
+# -----------------------------------------------------------------------------
+# Restart Gluster Volume
+# -----------------------------------------------------------------------------
+    - url: volume/:name/restart
+      auth: true
+      title: Restart gluster Volume
+      category: volume
+      method: PUT
+      example: |
+
+        curl -X PUT http://admin:secret123@localhost:9000/api/1.0/volume/gv1/restart
+      response: |
+
+        Success example:
+        {
+          "data": true,
+          "ok": true
+        }
+
+        Failure example:
+        {
+          "error": "volume start: gv1: failed: Volume gv1 does not exist",
+          "ok": false
+        }
+
+# -----------------------------------------------------------------------------
+# Stop Gluster Volume
+# -----------------------------------------------------------------------------
+    - url: volume/:name/stop
+      auth: true
+      title: Stop gluster Volume
+      category: volume
+      method: PUT
+      params:
+        - name: force
+          type: int
+          required: false
+          desc: Stop volume with force option
+          default: 0
+          example: 1
+      example: |
+
+        curl -X PUT http://admin:secret123@localhost:9000/api/1.0/volume/gv1/stop
+      response: |
+
+        Success example:
+        {
+          "data": true,
+          "ok": true
+        }
+
+        Failure example:
+        {
+          "error": "volume stop: gv1: failed: Volume gv1 does not exist",
+          "ok": false
+        }
+
+# -----------------------------------------------------------------------------
+# Add Brick to Gluster Volume
+# -----------------------------------------------------------------------------
+    - title: Add Brick to Gluster Volume
+      auth: true
+      url: volume/:name/addbrick
+      category: volume
+      method: POST
+      params:
+        - name: brick
+          type: string
+          required: true
+          example: "bricksserver1:/exports/bricks/b1"
+          desc: Brick path
+
+        - name: replica
+          type: int
+          required: false
+          example: 1
+          desc: Replica Count
+          default: 0
+
+          - name: stripe
+          type: int
+          required: false
+          example: 1
+          desc: Stripe Count
+          default: 0
+
+        - name: force
+          type: int
+          required: false
+          example: 1
+          desc: Brick add force
+          default: 0
+
+          example: |
+
+        curl -X POST http://admin:secret123@localhost:9000/api/1.0/volume/gv1/addbrick -d \
+        "brick=bricksserver1:/exports/bricks/b1&replica=2"
+
+      response: |
+
+        Success example:
+        {
+            "data": true,
+            "ok": true
+        }
+
+        Failure example:
+
+        {
+            "error": "volume add-brick: failed: Brick:  bricksserver:/exports/bricks/b1 not available",
+            "ok": false
+        }
+
+# -----------------------------------------------------------------------------
+# Force Remove Brick from Gluster Volume
+# -----------------------------------------------------------------------------
+    - title: Force Remove Brick from Gluster Volume
+      auth: true
+      url: volume/:name/removebrick
+      category: volume
+      method: POST
+      params:
+        - name: brick
+          type: string
+          required: true
+          example: "bricksserver1:/exports/bricks/b1"
+          desc: Brick path
+
+        - name: replica
+          type: int
+          required: false
+          example: 1
+          desc: Replica Count
+          default: 0
+
+          example: |
+
+        curl -X POST http://admin:secret123@localhost:9000/api/1.0/volume/gv1/removebrick -d \
+        "brick=bricksserver1:/exports/bricks/b1&replica=2"
+
+      response: |
+
+        Success example:
+        {
+            "data": true,
+            "ok": true
+        }
+
+        Failure example:
+
+        {
+            "error": "volume add-brick: failed: Brick:  bricksserver:/exports/bricks/b1 not available",
+            "ok": false
+        }
+
+
+# -----------------------------------------------------------------------------
+# Get Gluster Volumes info
+# -----------------------------------------------------------------------------
+    - url: volumes
+      auth: true
+      title: Get gluster Volume info of all volumes
+      category: volume
+      method: GET
+      example: |
+
+        curl -X GET http://admin:secret123@localhost:9000/api/1.0/volumes
+      response: |
+        N
+ 
+
+# -----------------------------------------------------------------------------
+# Get Gluster Volume info
+# -----------------------------------------------------------------------------
+    - url: volume/:name
+      auth: true
+      title: Get gluster Volume info of a gluster volume
+      category: volume
+      method: GET
+      example: |
+
+        curl -X GET http://admin:secret123@localhost:9000/api/1.0/volume/gv1
+      response: |
+        N
+
+# -----------------------------------------------------------------------------
+# Get Peers info
+# -----------------------------------------------------------------------------
+    - url: peers
+      auth: true
+      title: Get Gluster peers info
+      category: peer
+      method: GET
+      example: >-
+        curl -X GET http://admin:secret123@localhost:9000/api/1.0/peers
+      response: |
+
+        {
+            "data": [
+                 {
+                    "id": "4bb656aa-9410-42e6-8632-512c340f5cec",
+                    "name": "glusternode2", 
+                    "status": "CONNECTED"
+                 },
+                 {
+                     "id": "b29977d6-883f-459c-aa52-64f5920f68e1",
+                     "name": "localhost",
+                     "status": "CONNECTED"
+                 }
+            ],
+            "ok": true
+        }
+
+# -----------------------------------------------------------------------------
+# Peer probe/attach
+# -----------------------------------------------------------------------------
+    - url: peer/:hostname
+      auth: true
+      title: Add peer
+      category: peer
+      method: PUT
+      example: |
+
+        curl -X PUT http://admin:secret123@localhost:9000/api/1.0/peer/glusternode1
+      response: |
+
+        Success example:
+          {
+              "data": true,
+              "ok": true
+          }
+
+        Failure example:
+          {
+              "error": "peer probe: failed: Probe returned with unknown errno 107",
+              "ok": false
+          }
+
+# -----------------------------------------------------------------------------
+# Peer probe/detach
+# -----------------------------------------------------------------------------
+    - url: peer/:hostname
+      auth: true
+      title: Detach peer
+      category: peer
+      method: DELETE
+      params:
+        - name: force
+          type: int
+          required: false
+          desc: Peer detach with force option
+          default: 0
+          example: 1
+      example: |
+
+        curl -X DELETE http://admin:secret123@localhost:9000/api/1.0/peer/glusternode1
+      response: |
+
+        Success example:
+          {
+              "data": true,
+              "ok": true
+          }
+
+        Failure example:
+          {
+              "error": "peer detach: failed: glusternode1 is not part of cluster",
+              "ok": false
+          }

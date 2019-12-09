@@ -1,0 +1,3 @@
+#!/bin/sh
+/opt/rwo/serf/handlers/bin/glusterquery
+# serf/handlers/query/gluster

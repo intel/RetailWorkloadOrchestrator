@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>GlusterFS REST API documentation</title>
+    <link rel="stylesheet" href="/static/apidoc.css" type="text/css"
+          media="screen" />
+  </head>
+  <body>
+    <div class="top-bar">
+      <div class="header">
+        <span class="logo-left">gluster</span>
+        <span class="logo-right">rest</span><span class="logo-version">v1.0</span>
+        <span class="subtitle">documentation</span>
+      </div>
+    </div>
+    <div class="content">
+      {% for api in apis %}
+      <div class="api-box">
+      <span class='api-desc'>{{ api['title'] }}</span>
+      <span class='api-url'><span class='api-url-prefix'>{{ api['method'] }}</span> /api/1.0/{{ api['url'] }}</span>
+      <span class="api-auth"><strong>Authentication</strong>: 
+      {% if api['auth'] %}
+        required(HTTP Basic)
+      {% else %}
+        N/A
+      {% endif %}
+      </span>
+      <div class="sep"></div>
+      <span class="params-title">Parameters:</span>      
+      {% if 'params' in api %}
+      <table class="params-table">
+        <tbody>
+         {% for param in api['params'] %}
+          <tr>
+            <td class="left">
+              <span class="param-name">{{ param['name'] }}</span>
+              <span class="param-required">
+                {% if param['required'] %}
+                required
+                {% else %}
+                optional
+                {% endif %}
+              </span>
+            </td>
+            <td class="right">
+              <span class="param-desc">{{ param['desc'] }}
+                {% if 'default' in param %}
+                (default: {{ param['default'] }})
+                {% endif %}
+              </span>
+              <span class="param-example">Example values: param['example']</span>
+            </td>
+          </tr>
+         {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      None
+      {% endif %}
+      <div class="sep"></div>
+      <span class="api-example"><strong>Example</strong>:</span>
+      <pre>
+        {{ api['example'] }}
+      </pre>
+      <div class="sep"></div>
+      <span class="api-example"><strong>Response</strong>:</span>
+      <pre>
+        {{ api['response'] }}
+      </pre>
+      <div class="sep"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </body>
+</html>

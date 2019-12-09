@@ -1,0 +1,3 @@
+#!/bin/sh
+/opt/rwo/serf/handlers/bin/dockerquery
+# serf/handlers/query/docker

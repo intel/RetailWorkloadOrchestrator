@@ -1,0 +1,48 @@
+FROM alpine:3.9 as hashibase
+MAINTAINER Bryan J Rodriguez <bryan.j.rodriguez@intel.com>
+
+RUN set -x \
+ && apk add --no-cache \
+    gnupg \
+ && gpg --version
+
+ARG HASHICORP_FINGERPRINT=91a6e7f85d05c65630bef18951852d87348ffc4c
+
+ADD https://keybase.io/hashicorp/pgp_keys.asc?fingerprint=${HASHICORP_FINGERPRINT} /gpg/import/hashicorp.asc
+
+RUN gpg --import /gpg/import/hashicorp.asc
+
+RUN apk add git
+RUN apk add go
+RUN apk add libc-dev
+
+WORKDIR /tmp
+
+RUN git clone https://github.com/hashicorp/serf.git
+RUN cd serf/ && git checkout v0.8.4
+RUN cd serf/cmd/serf && go build
+RUN cp serf/cmd/serf/serf /usr/local/bin
+
+FROM alpine:3.9
+
+ARG SERF_GID=7946
+ARG SERF_UID=7373
+
+RUN set -x \
+ && apk add --no-cache \
+    coreutils \
+    dumb-init \
+    jq \
+    su-exec \
+ && addgroup -g ${SERF_GID} serf \
+ && adduser -S -G serf -u ${SERF_UID} serf
+
+COPY --from=hashibase /usr/local/bin/* /usr/local/bin/
+COPY serf/ /opt/rwo/serf/
+COPY gluster/ /opt/rwo/gluster/
+COPY bin/ /opt/rwo/bin/
+
+WORKDIR /
+
+ENTRYPOINT ["dumb-init", "--", "su-exec", "serf:serf", "serf"]
+CMD ["help"]

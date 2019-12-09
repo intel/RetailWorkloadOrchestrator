@@ -1,0 +1,17 @@
+#!/bin/bash
+echo "Removing portainer from stack"
+docker stack rm portainer
+echo "Removing portainer from stack completed"
+
+echo "Removing services deployed  from portainer."
+docker service rm $(docker service ls -q)
+echo "Removing services deployed  from portainer completed."
+
+echo "Removing docker processes."
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+echo "Removing docker processes completed."
+
+echo "Removing docker volumes."
+docker volume rm $(docker volume ls -qf dangling=true | xargs)
+echo "Removing docker volumes completed."

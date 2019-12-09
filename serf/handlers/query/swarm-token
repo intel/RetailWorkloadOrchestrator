@@ -1,0 +1,3 @@
+#!/bin/sh
+/opt/rwo/serf/handlers/bin/swarmtokenquery
+# serf/handlers/query/swarm-token

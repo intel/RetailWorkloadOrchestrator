@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "******** Running serf member-update ********"
+./opt/rwo/serf/handlers/bin/memberupdate
+# serf/handlers/member-update

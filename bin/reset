@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Cleanup Function
+perform_umount()
+{
+
+for x in $(find /var/lib/docker/volumes/);
+do  if  mountpoint -q $x
+    then
+       echo $x
+       umount $x
+     fi
+done
+
+
+}
+
+echo "Performing Cleanup in RWO Serf Agent"
+docker exec rwo_serf-agent_1 sh /opt/rwo/bin/resetconsole
+echo "RWO serf agent cleanup completed"
+
+echo "Performing Unmount of all the mountpoints"
+for x in $(ls /mnt/); do umount /mnt/$x > /dev/null 2>&1; done
+rm -fr /mnt/* && \
+systemctl stop rwo && \
+perform_umount
+perform_umount
+echo "Performing Unmount of all the mountpoints completed."
+
+echo "Performing Docker Volume Removal."
+docker volume rm rwo_docker_pid_vol && \
+docker volume rm rwo_gluster_database_vol && \
+docker volume rm rwo_serf_vol && \
+echo "Performing Docker Volume removal completed."
+
+echo "Performing Serf cache cleanup."
+rm /opt/rwo/serf/data/tags.json > /dev/null 2>&1
+rm /var/log/rwo/serf.log > /dev/null 2>&1
+rm /var/log/membercleanup.log > /dev/null 2>&1
+
+echo "Performing docker volume prune."
+docker volume prune --force > /dev/null 2>&1 && \
+echo "Performing docker volume prune completed."
+
+echo "RWO Reset complete.  Run 'systemctl start rwo' to start the service."
+
+

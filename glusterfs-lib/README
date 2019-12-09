@@ -1,0 +1,3 @@
+# Glusterfs-lib
+
+This is a golang package to provide a REST api client to `glusterfsrestd` server.

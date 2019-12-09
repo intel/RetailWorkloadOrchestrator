@@ -1,0 +1,16 @@
+[Unit]
+Description=Retail Workload Orchestrator
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+StandardError=null
+StandardOutput=null
+WorkingDirectory=/opt/rwo/compose
+ExecStart=/opt/rwo/bin/startrwo.sh
+ExecStop=/opt/rwo/bin/stoprwo.sh
+
+[Install]
+WantedBy=multi-user.target

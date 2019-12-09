@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "******** Running serf gluster update ********"
+/opt/rwo/serf/handlers/bin/./handlegluster
+# serf/handlers/member-update.x/gluster

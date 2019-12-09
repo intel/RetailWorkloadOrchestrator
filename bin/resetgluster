@@ -1,0 +1,5 @@
+#!/bin/bash
+
+systemctl stop rwo
+docker volume rm rwo_gluster_database_vol
+

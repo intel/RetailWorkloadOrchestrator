@@ -126,7 +126,7 @@ Service stacks can be deployed on the cluster using any of the following methods
 
 #### CLI through SSH server
 
-[See Instructions Here.](04_Deploy_Workloads.md#set-up-management-tools)
+[See Instructions Here.](04_Deploy_Workloads.md#set-up-console)
 
 
 #### Web consoles

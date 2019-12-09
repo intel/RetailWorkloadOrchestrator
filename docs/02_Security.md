@@ -274,7 +274,7 @@ If any node is not update with the latest key for any reason, out of band mechan
 
 If there is a need to change `TLS Keys` and it is known that cluster's `CA Key` is safe and not compromised, it is possible to [re-generate](#create-tls-keys) the `TLS Keys` for the node again.
 
-NOTE: In case the `CA Key` is compromised, you need to [generate](#create-ca-key) a new `CA Key` and [regenerate](create-tls-keys) `TLS keys` for all  nodes which are signe dby the new `CA key`.
+NOTE: In case the `CA Key` is compromised, you need to [generate](#create-ca-key) a new `CA Key` and [regenerate](#create-tls-keys) `TLS keys` for all  nodes which are signe dby the new `CA key`.
 
 ## NOTE to Admin
 

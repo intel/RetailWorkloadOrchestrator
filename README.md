@@ -31,11 +31,27 @@ RWO version components:
 
 ## Installation
 
-There are two installation methods:
+  1. Install your favorite Linux Distro with Docker and Git.
 
-  1. The easiest method is to choose an Edge Profile that includes Retail Workload Orchestrator using the Edge Builder.  Go to the open source Edge Builder project and follow the installation instructions.
+  2. Git clone this project.
+  ```
+  mkdir -p /opt
+  cd /opt
+  git clone https://github.com/intel/RetailWorkloadOrchestrator.git rwo
+  ```
 
-  2. Build Retail Workload Orchestrator directly onto a Linux Distro.
+  3. Build Retail Workload Orchestrator.
+  ```
+  cd /opt/rwo
+  ./build.sh
+  ```
+
+  4. Optionally, if you are using systemd you can add the RWO service
+  ```
+  mkdir -p /etc/systemd/system/multi-user.target.wants
+  cp /opt/rwo/systemd/rwo.service /etc/systemd/system/
+	ln -s /etc/systemd/system/rwo.service /etc/systemd/system/multi-user.target.wants/rwo.service
+  ```
 
 ## Building RWO on your Linux Distro
 

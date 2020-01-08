@@ -31,7 +31,7 @@ RWO version components:
 
 ## Installation
 
-  1. Install your favorite Linux Distro with Docker and Git.
+  1. Install your favorite Linux Distro with Docker and Git.  You can use Retail Node Installer https://github.com/intel/retail-node-installer to install Ubuntu or Clear Linux.
 
   2. Git clone this project.
   ```

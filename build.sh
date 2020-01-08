@@ -27,7 +27,7 @@ printBanner $msg
 logMsg $msg
 ./scripts/buildSerfHandlers.sh
 
-msg="Run 'docker-compose -p rwo -f /opt/rwo/compose/docker-compose.yml up -d' to start"
+msg="To start RWO execute '/opt/rwo/bin/startrwo.sh'"
 printBanner $msg
-msg="Run 'docker-compose -p rwo -f /opt/rwo/compose/docker-compose.yml up -d' to start"
+msg="To stop RWO execute '/opt/rwo/bin/stoprwo.sh'"
 printBanner $msg

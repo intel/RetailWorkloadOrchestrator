@@ -52,7 +52,7 @@ unit_test() {
         HELPERS_MOCK_PATH=${SERF_PATH}/tests/mock_packages/helpers
         RWOGLUSTER_MOCK_PATH=${SERF_PATH}/tests/mock_packages/rwogluster
 
-        docker run --rm  -e "CGO_ENABLED=0" -v ${SERF_PATH}/.gopath/src/golang.org:/data/src/golang.org -v ${SERF_PATH}/.gopath/src/github.com:/data/src/github.com  -e "GOPATH=/data/" -v ${RWOGLUSTER_MOCK_PATH}:/data/src/rwogluster -v ${HELPERS_MOCK_PATH}:/data/src/helpers  -v ${SERF_PATH}/src/member-update-x:/data/src/memberupdatex  -v ${SERF_PATH}/bin:/data/bin   -v ${SERF_PATH}/src:/data/serf golang:latest go test -v /data/serf/${file_in_src} /data/serf/${test_file}
+        docker run --rm  -e "CGO_ENABLED=0" -v ${SERF_PATH}/.gopath/src/golang.org:/data/src/golang.org -v ${SERF_PATH}/.gopath/src/github.com:/data/src/github.com  -e "GOPATH=/data/" -v ${RWOGLUSTER_MOCK_PATH}:/data/src/rwogluster -v ${HELPERS_MOCK_PATH}:/data/src/helpers  -v ${SERF_PATH}/src/member-update-x:/data/src/memberupdatex  -v ${SERF_PATH}/bin:/data/bin   -v ${SERF_PATH}/src:/data/serf golang:1.14.0 go test -v /data/serf/${file_in_src} /data/serf/${test_file}
 
     fi
 }
@@ -85,13 +85,13 @@ else
     mkdir -p ${SERF_PATH}/.gopath
     echo -e  "Downloading Packages.... ${T_RESET} "
     echo -e  "Do not abort ${T_RESET} "
-    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get golang.org/x/sys/unix
+    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get golang.org/x/sys/unix
     #echo -e  "${blue} GO ${T_OK_ICON} ${T_RESET} "
-    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get github.com/sirupsen/logrus
+    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/sirupsen/logrus
     #echo -e  "${blue} LOGRUS ${T_OK_ICON} ${T_RESET}"
-    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get github.com/hashicorp/serf/client
+    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/hashicorp/serf/client
     #echo -e  "${blue} SERF CLIENT ${T_OK_ICON} ${T_RESET}"
-    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get github.com/docker/docker
+    docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/docker/docker
     # echo -e  "${blue} DOCKER CLIENT ${T_OK_ICON} ${T_RESET}"
 fi
 

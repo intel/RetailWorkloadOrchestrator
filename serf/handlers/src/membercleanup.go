@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	mg "rwogluster"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -52,8 +53,7 @@ func main() {
 	}
 
 	log.Println("******** Running serf member-Cleanup ********")
-	log.Println("Handle member cleanup, sleeping for 5 min in case the member is rebooting.")
-	time.Sleep(300 * time.Second)
+	waitForaMemberReboot()
 
 	err = memberCleanup()
 	if err != nil {
@@ -61,7 +61,7 @@ func main() {
 		return
 	}
 
-	err = removeDockerNodes()
+	err = removeDownNode()
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -72,7 +72,13 @@ func main() {
 	return
 }
 
-// memberCleanup: Function to remove the failed member from the serf cluster.
+func waitForaMemberReboot() {
+	delaySeconds := helpers.GetSleepTimeFromEnv("MEMBER_REBOOT_TIME_IN_SECONDS")
+	log.Println("Handle member cleanup, sleeping for ", strconv.Itoa(delaySeconds), " seconds in case the member is rebooting. ")
+	time.Sleep(time.Duration(delaySeconds) * time.Second)
+}
+
+// memberCleanup: Function to remove the failed member from docker & serf cluster.
 func memberCleanup() error {
 
 	//Do the Cleanup for failed nodes
@@ -91,23 +97,47 @@ func memberCleanup() error {
 				log.Println("failed member: ", element)
 				removeMember(element)
 			}
-
 		}
 	}
 	return nil
 }
 
+func setQuorum(mode string) error {
+
+	err := helpers.SetQuorumRatio(client, mode)
+	return err
+}
+
 // removeMember: Remove member from serf cluster along with gluster bricks.
 func removeMember(nodeName string) error {
 
+	//Set the quorum to zero before performing gluster cleanup.
+	err := setQuorum("cleanup")
+	if err != nil {
+		log.Println("Error while setting server quorum ratio ", err)
+		// Do not return back, Continue removing bricks.
+	}
+
+	time.Sleep(1 * time.Second)
+
 	//Remove all the gluster bricks associated with the failed node and remove from docker swarm.
-	err := glusterCleanup(nodeName)
+	err = glusterCleanup(nodeName)
 	if err != nil {
 		log.Println("Error while performing gluster cleanup.")
+		log.Println(err.Error())
 		//do not return back, As gluster bricks have been removed already.
 	}
 
 	log.Println("Gluster and Docker node cleanup successful.")
+
+	// reset the quorum once the member is removed from the cluster.
+	err = setQuorum("update")
+	if err != nil {
+		log.Println("Error while setting server quorum ratio ", err)
+		// Do not return back, Continue removing member.
+	}
+
+	time.Sleep(1 * time.Second)
 
 	err = helpers.MemberForceLeave(nodeName)
 	if err != nil {
@@ -116,38 +146,6 @@ func removeMember(nodeName string) error {
 	}
 
 	log.Println("Member " + nodeName + " has left the serf cluster successfully")
-	return nil
-}
-
-// removeDockerNodes: Get the docker nodes which are down and remove then from swarm.
-func removeDockerNodes() error {
-
-	//remove all nodes which are down
-	node, err := helpers.GetNodeIDByState("down")
-	if err != nil {
-		log.Println("Error while retrieving the docker nodes which are down ", err.Error())
-		return err
-	}
-
-	for _, element := range node {
-		if len(element) > 0 {
-			log.Println("Removing member from docker swarm cluster " + element)
-
-			log.Println("DemoteNode " + element)
-			err = helpers.DemoteNode(element)
-			if err != nil {
-				log.Println("Error in demoting a docker member. ", err.Error())
-				//Do not return control back, If a leader goes down from the cluster, Docker will throw the error " Can't find manager in raft member list"
-			}
-
-			log.Println("RemoveNode " + element)
-			err := helpers.RemoveNode(element, true)
-			if err != nil {
-				log.Println("Error while removing docker node ", err.Error())
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -193,6 +191,7 @@ func detachPeer(host string) error {
 	err := client.PeerDetach(host)
 	if err != nil {
 		log.Println("Error while removing gluster peer. ")
+		log.Println(err.Error())
 		//dont return back as peer might be already removed during previous iteration of cleaning
 	}
 	return nil
@@ -202,6 +201,33 @@ func detachPeer(host string) error {
 func removeNode(node string) error {
 
 	nodeID, err := helpers.GetNodeIDByStateAndHostname(node, "down")
+	log.Println("nodeID" + nodeID)
+	if err != nil {
+		log.Println(" Error while checking node id for the failed member in docker swarm", err.Error())
+		return err
+	}
+
+	if nodeID != "" {
+		log.Println("DemoteNode " + nodeID)
+		err = helpers.DemoteNode(nodeID)
+		if err != nil {
+			log.Println("Error in demoting a docker member. ", err.Error())
+			//Do not return control back, If a leader goes down from the cluster, Docker will throw the error " Can't find manager in raft member list"
+		}
+		log.Println("RemoveNode " + nodeID)
+		err = helpers.RemoveNode(nodeID, true)
+		if err != nil {
+			log.Println("Error in demoting a docker member. ", err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
+// removeDownNode: Helper function to demote and remove node from docker swarm  with duplicate entry
+func removeDownNode() error {
+
+	nodeID, err := helpers.GetNodeIDByDownState()
 	log.Println("nodeID" + nodeID)
 	if err != nil {
 		log.Println(" Error while checking node id for the failed member in docker swarm", err.Error())
@@ -253,11 +279,11 @@ func removeGlusterBrick(glusterHostToDetach string) error {
 					if strings.Contains(brick, glusterHostToDetach) {
 						// In case of Replicated volumes, replica has to be decremented manually while using RemoveBrick
 						replica := glusterPeerCount - 1
-						// TODO: Check if above eq is correct or this one:  replica = glusterPeerCount;
 						log.Println("Removing gluster volume brick")
 						err = client.RemoveBrick(vol.Name, brick, replica)
 						if err != nil {
 							log.Println("Error Removing Brick: ")
+							log.Println(err.Error())
 						}
 
 					}

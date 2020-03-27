@@ -5,6 +5,7 @@ package helpers
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -28,44 +29,44 @@ var (
 )
 
 //Error Logs
-func (l *Logger) Error(input ...interface{}) (n int, err error) {
+func (l *Logger) Error(input ...interface{}) {
 
 	if len(input) == 0 || input == nil {
-		return 0, nil
+		return
 	}
 
 	// less than equal to maximum
 	if l.level <= 2 {
-		return fmt.Println(input...)
+		log.Println(input...)
 	}
-	return 0, nil
+	return
 }
 
 //Info Logs
-func (l *Logger) Info(input ...interface{}) (n int, err error) {
+func (l *Logger) Info(input ...interface{}) {
 
 	if len(input) == 0 || input == nil {
-		return 0, nil
+		return
 	}
 
 	// less than equal to maximum
 	if l.level <= 2 {
-		return fmt.Println(input...)
+		log.Println(input...)
 	}
-	return 0, nil
+	return
 }
 
 //Debug Logs
-func (l *Logger) Debug(input ...interface{}) (n int, err error) {
+func (l *Logger) Debug(input ...interface{}) {
 
 	if len(input) == 0 || input == nil {
-		return 0, nil
+		return
 	}
 
 	if l.level == 2 {
-		return fmt.Println(input...)
+		log.Println(input...)
 	}
-	return 0, nil
+	return
 }
 
 //GetLogger will return log level
@@ -304,6 +305,26 @@ func GlusterLibClient() *mg.Client {
 	return cl
 }
 
+// GetSleepTimeFromEnv Get the value of a env variable which is defined in compose file.
+func GetSleepTimeFromEnv(envVariable string) int {
+
+	delaySecondsFromEnv, _ := os.LookupEnv(envVariable)
+	var delaySeconds int
+	if len(delaySecondsFromEnv) > 0 {
+		delaySeconds, _ = strconv.Atoi(delaySecondsFromEnv)
+		// check the delay, It should not be less then 30 seconds.
+		if delaySeconds < 30 {
+			delaySeconds = 30
+		}
+	} else {
+		rwolog.Debug(envVariable + " is not defined in the docker compose. Setting it to 30 seconds.")
+		delaySeconds = 30
+	}
+
+	return delaySeconds
+
+}
+
 // CreateDirForToken will create dir for docker swarm join tokens once the mount operation is done.
 func CreateDirForToken() error {
 
@@ -341,4 +362,69 @@ func CreateDirForToken() error {
 		}
 	}
 	return nil
+}
+
+// EnableServerQuorum will set the server quorum for the specified gluster volume.
+func EnableServerQuorum(r *mg.Client, name string) error {
+
+	err := r.EnableServerQuorum(name)
+	if err != nil {
+		rwolog.Error("Error in Enabling server quorum ", err)
+		return err
+	}
+	return nil
+}
+
+// SetQuorumRatio : Set the server quorum ratio for all the volumes.
+// mode : Specifies operation. If it is cleanup, Then ratio will be set to zero
+// If it is update,  set the ratio returned by GetliveQuorumRatio method.
+func SetQuorumRatio(r *mg.Client, mode string) error {
+	retry := 5
+	var err error
+
+	if mode == "cleanup" {
+		rwolog.Debug("Reset the server quorum ratio.")
+		for retry > 0 {
+			err := r.SetServerQuorumratio("0%")
+			if err == nil {
+				break
+			}
+
+			log.Println("Error in setQuorum: Trying again", err)
+			time.Sleep(1 * time.Second)
+			retry--
+		}
+	} else {
+		for retry > 0 {
+			ratio := calculateQuorumRatio()
+			rwolog.Debug("Update the server quorum ratio to ", ratio)
+			err := r.SetServerQuorumratio(ratio)
+			if err == nil {
+				break
+			}
+
+			log.Println("Error in setQuorum: Trying again", err)
+			time.Sleep(1 * time.Second)
+			retry--
+		}
+	}
+	return err
+}
+
+// calculateQuorumRatio returns quorum percent based on number of members alive in the cluster.
+func calculateQuorumRatio() string {
+
+	alivemembers := CountAliveMembers()
+
+	// If there is only one member in the cluster, Return the quorum ratio as 0%.
+	// For two members in the cluster, Return 51% as quorum ratio as we dont want any member to write the data.
+	// For more then three members, ratio = ((n-1)/n) * 100, (n is number of members alive in the cluster)  is used to calculate quorum.
+	if alivemembers == 1 {
+		return "0%"
+	} else if alivemembers == 2 {
+		return "51%"
+	} else {
+		percent := ((float64(alivemembers) - 1) / float64(alivemembers)) * 100
+		return fmt.Sprintf("%s%%", strconv.Itoa(int(percent)))
+	}
 }

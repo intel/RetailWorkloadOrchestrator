@@ -39,7 +39,7 @@ func main() {
 	}
 
 	rwolog.Info("******** Running serf member-failed ********")
-	rwolog.Info("Member failed, sleeping for 5 min in case the member is rebooting.")
+	rwolog.Info("Member failed, sleeping in case the member is rebooting.")
 
 	//Get the alive members count as member failed has been executed. This will be helpfull if a member is going through a reboot and only one member is alive.
 	aliveMembers := helpers.CountAliveMembers()
@@ -55,10 +55,9 @@ func main() {
 		serfRole = ""
 	}
 
-	if serfRole != "leader" {
+	waitForDockerSwarmRestore()
 
-		// Swarm will take time to assign new leader.
-		waitForDockerSwarmRestore()
+	if serfRole != "leader" {
 
 		if aliveMembers == 1 {
 			err := handleSwarmAsLeader()
@@ -75,7 +74,6 @@ func main() {
 	} else if serfRole == "leader" {
 
 		if aliveMembers == 1 {
-			waitForDockerSwarmRestore()
 			err = manageSwarm()
 			if err != nil {
 				return
@@ -97,20 +95,8 @@ func main() {
 // waitForDockerSwarmRestore will wait for specified time for docker swarm to update its status in the cluster.
 func waitForDockerSwarmRestore() {
 
-	delaySecondsFromEnv, _ := os.LookupEnv("MEMBER_REBOOT_TIME")
-	var delaySeconds int
-	if len(delaySecondsFromEnv) > 0 {
-		delaySeconds, _ = strconv.Atoi(delaySecondsFromEnv)
-		//check the delay should not be more then 3600 seconds.
-		if delaySeconds > 3600 {
-			delaySeconds = 30
-		}
-	} else {
-		rwolog.Debug("MEMBER_REBOOT_TIME is not defined in the docker compose. Setting it to 30 seconds.")
-		delaySeconds = 30
-	}
-
-	rwolog.Debug("Sleeping for ", strconv.Itoa(delaySeconds))
+	delaySeconds := helpers.GetSleepTimeFromEnv("SWARM_RESTORE_TIME_IN_SECONDS")
+	rwolog.Debug("Sleeping for (seconds): ", strconv.Itoa(delaySeconds))
 	time.Sleep(time.Duration(delaySeconds) * time.Second)
 }
 

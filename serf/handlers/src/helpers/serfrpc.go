@@ -116,6 +116,14 @@ func SetRoleTag(value string) error {
 	return setSerfTag(tag)
 }
 
+// SetTempTag set role Tag for the serf member.
+func SetTempTag() error {
+
+	tag := make(map[string]string)
+	tag["temp"] = "true"
+	return setSerfTag(tag)
+}
+
 // SetWaitingForWorkerTag set waitingforworker Tag for the serf member.
 func SetWaitingForWorkerTag(value string) error {
 
@@ -581,6 +589,11 @@ func DeleteSerfTag(tag string) error {
 // SerfQuery function to handle serf queries which retries if the response is empty.
 func SerfQuery(name string, payload string) (string, error) {
 
+	leaderNums := CountLeaders()
+	if leaderNums == 0 {
+		return "", nil
+	}
+
 	var retry int //Number of times serf query to be retried.
 	var data string
 	var err error
@@ -588,7 +601,7 @@ func SerfQuery(name string, payload string) (string, error) {
 	timeout = 5000000000 //nano Seconds
 	for {
 		//Retry for 10 times if leader does not return back output.
-		if retry <= 10 {
+		if retry <= 5 {
 			data, err = query(name, payload, timeout)
 			if err != nil {
 				return "", err

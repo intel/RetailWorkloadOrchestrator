@@ -167,6 +167,7 @@ func Gluster() error {
 		rwolog.Debug("Volume count is ", len(vols))
 		//Start the gluster volume.
 		for _, vol := range vols {
+
 			rwolog.Debug("Starting the volume ", vol.Name)
 			startGlusterVolume(vol.Name)
 		}
@@ -178,6 +179,13 @@ func Gluster() error {
 			return err
 		}
 	}
+
+	// Set the server quorum ratio.
+	err = SetServerQuorumRatio()
+	if err != nil {
+		return err
+	}
+
 	// Perform volume mount.
 	err = helpers.MountGlusterVolumes()
 	if err != nil {
@@ -415,6 +423,13 @@ func purgeOldStateOfGluster() error {
 		}
 
 		for _, vol := range vols {
+
+			//Set the quorum ratio before cleanup.
+			err = helpers.SetQuorumRatio(client, "cleanup")
+			if err != nil {
+				rwolog.Error("Error while setting server quorum ratio ", err)
+			}
+
 			stopVolumeRetry(vol.Name)
 
 			// Iterate over bricks and remove bricks but one
@@ -450,7 +465,7 @@ func purgeOldStateOfGluster() error {
 		for _, p := range otherPeers {
 			err = client.PeerDetach(p)
 			if err != nil {
-				helpers.RestartGlusterContainer()
+				rwolog.Error(err)
 			}
 			rwolog.Debug("Detach peer ", p, " error ", err)
 		}
@@ -468,8 +483,6 @@ func purgeOldStateOfGluster() error {
 
 	} else {
 		rwolog.Debug("purgeOldStateOfGluster: Some peers are connected. Not removing bricks.")
-		// memberfailed should detach peers with detach peer force , so that this contion is not hit
-
 	}
 
 	return nil
@@ -514,7 +527,7 @@ func manageVolumes(glusterClusterAddr string) error {
 			return err
 		}
 		time.Sleep(2 * time.Second)
-		return err
+		return fmt.Errorf("unable to probe peer from the leader, will set up serf tags to retry", glusterClusterAddr)
 	}
 	return nil
 }
@@ -597,6 +610,35 @@ func manageAppsVolume(Vol string, glusterClusterAddr string) error {
 		return err
 	}
 	startGlusterVolume(Vol)
+	return nil
+}
+
+// SetServerQuorumRatio will enable the quorum for the servers and sets the quorum ratio.
+func SetServerQuorumRatio() error {
+
+	// Get the list of volumes.
+	vols, err := client.ListVolumes()
+	if err != nil {
+		rwolog.Error("Error in gluster volume list", err.Error())
+		return err
+	}
+
+	// Enable the server quorum for each of the volume.
+	for _, vol := range vols {
+		err = helpers.EnableServerQuorum(client, vol.Name)
+		if err != nil {
+			rwolog.Error("Error in Enabling server quorum ", err.Error())
+			return err
+		}
+	}
+
+	// Set the quorum ratio for all the volumes.
+	err = helpers.SetQuorumRatio(client, "update")
+	if err != nil {
+		rwolog.Error("Error in Enabling server quorum ", err.Error())
+		return err
+	}
+
 	return nil
 }
 

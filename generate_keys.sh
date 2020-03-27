@@ -15,17 +15,21 @@ else
 	export AWS_CLI_PROXY=""
 fi
 
-# Build GO serf handlers
-msg="Building GO Serf handlers, this can take a few minutes..."
+msg="Generating SSL Keys..."
 printBanner $msg
 logMsg $msg
-./scripts/buildSerfHandlers.sh
+mkdir -p node_ca_key
+cd node_ca_key
+../scripts/credtool_create_ca.sh rwo
+cd -
+scripts/credtool_create_keys.sh rwo.key rwo.crt
 
-# Build Retail WorkLoad Orchestrator
-msg="Building RWO, this can take a few minutes..."
+msg="Generating Cluster Key..."
 printBanner $msg
 logMsg $msg
-source "scripts/buildRWO.sh"
+mkdir -p node_keys/rwo
+param_rwokey="$(tr </dev/urandom -dc +a-fA-F0-9 | head -c43)="
+echo '[ \"${param_rwokey}\" ]' > node_keys/rwo/keyring.json
 
-msg="Building Complete"
+msg="Root CA Key is in ./node_ca_key and the Keys for each node are in node_keys.  These should copied to /etc/ssl for each node.  For more details, please refer to https://github.com/intel/RetailWorkloadOrchestrator/blob/master/docs/02_Security.md"
 printBanner $msg

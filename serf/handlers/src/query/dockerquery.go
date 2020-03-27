@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"helpers"
 
 	"context"
 	"github.com/docker/docker/api/types"
@@ -65,6 +66,12 @@ func main() {
 
 	if strings.Contains(input, "reachable") {
 		fmt.Println(strconv.Itoa(count))
+		return
+	}
+
+	if strings.Contains(input, "cleanUpStaleMember") {
+		helpers.RemoveDockerNodes()
+		fmt.Println("Success")
 		return
 	}
 

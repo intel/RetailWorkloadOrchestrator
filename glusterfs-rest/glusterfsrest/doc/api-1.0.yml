@@ -13,21 +13,21 @@ apis:
           required: true
           example: "bricksserver1:/exports/bricks/b1"
           desc: Comma seperated Brick paths
-
+          
         - name: replica
           type: int
           required: false
           example: 1
           desc: Replica Count
           default: 0
-
+       
         - name: stripe
           type: int
           required: false
           example: 1
           desc: Stripe Count
           default: 0
-
+       
         - name: transport
           type: int
           required: false
@@ -84,11 +84,11 @@ apis:
           example: 1
           default: 0
       example: |
-
+        
         curl -X DELETE http://admin:secret123@localhost:9000/api/1.0/volume/gv1
 
       response: |
-
+        
         Success example:
         {
           "data": true,
@@ -302,7 +302,7 @@ apis:
         curl -X GET http://admin:secret123@localhost:9000/api/1.0/volumes
       response: |
         N
- 
+        
 
 # -----------------------------------------------------------------------------
 # Get Gluster Volume info
@@ -333,16 +333,16 @@ apis:
         {
             "data": [
                  {
-                    "id": "4bb656aa-9410-42e6-8632-512c340f5cec",
+                    "id": "4bb656aa-9410-42e6-8632-512c340f5cec", 
                     "name": "glusternode2", 
                     "status": "CONNECTED"
-                 },
+                 }, 
                  {
-                     "id": "b29977d6-883f-459c-aa52-64f5920f68e1",
-                     "name": "localhost",
+                     "id": "b29977d6-883f-459c-aa52-64f5920f68e1", 
+                     "name": "localhost", 
                      "status": "CONNECTED"
                  }
-            ],
+            ], 
             "ok": true
         }
 
@@ -353,21 +353,21 @@ apis:
       auth: true
       title: Add peer
       category: peer
-      method: PUT
+      method: POST
       example: |
 
-        curl -X PUT http://admin:secret123@localhost:9000/api/1.0/peer/glusternode1
+        curl -X POST http://admin:secret123@localhost:9000/api/1.0/peer/glusternode1
       response: |
 
         Success example:
           {
-              "data": true,
+              "data": true, 
               "ok": true
           }
 
         Failure example:
           {
-              "error": "peer probe: failed: Probe returned with unknown errno 107",
+              "error": "peer probe: failed: Probe returned with unknown errno 107", 
               "ok": false
           }
 
@@ -390,15 +390,88 @@ apis:
 
         curl -X DELETE http://admin:secret123@localhost:9000/api/1.0/peer/glusternode1
       response: |
-
         Success example:
           {
-              "data": true,
+              "data": true, 
               "ok": true
           }
-
         Failure example:
           {
-              "error": "peer detach: failed: glusternode1 is not part of cluster",
+              "error": "peer detach: failed: glusternode1 is not part of cluster", 
               "ok": false
           }
+
+# -----------------------------------------------------------------------------
+#  Enable gluster volume Quorum
+# -----------------------------------------------------------------------------
+    - title: Enables the gluster volume quorum and specifies the type.
+      auth: true
+      url: volume/:name/quorum/type
+      category: volume
+      method: POST
+      params:
+        - name: vol
+          type: string
+          required: true
+          example: "/vol1/quorum/"
+          desc: volume name
+
+        - name: type
+          type: string
+          required: true
+          example:  "/vol1/quorum/server"
+          desc: quorum type
+
+        curl -X POST http://admin:secret123@localhost:9000/api/1.0/volume/quorum/type -d \
+        "vol=vol1&type=server"
+
+      response: |
+        Success example:
+        {
+            "data": true,
+            "ok": true
+        }
+        Failure example:
+
+        {
+            "error": "server-quorum-type failed: Unable to get lock, Try after some time.",
+            "ok": false
+        }
+
+
+# -----------------------------------------------------------------------------
+#  Set quorum ratio
+# -----------------------------------------------------------------------------
+    - title: Set the quorum ratio for all the volumes .
+      auth: true
+      url: volume/:name/quorum/ratio
+      category: volume
+      method: POST
+      params:
+        - name: ratio
+          type: string
+          required: true
+          example: "/volume/quorum/ratio"
+          desc: volume name
+
+        - name: type
+          type: string
+          required: true
+          example: "/volume/quorum/ratio"
+          desc: quorum type
+
+        curl -X POST http://admin:secret123@localhost:9000/api/1.0/volume/quorum/ratio -d \
+        "ratio=61%&type=server"
+
+      response: |
+        Success example:
+        {
+            "data": true,
+            "ok": true
+        }
+        Failure example:
+
+        {
+            "error": "volume set: failed: Not a valid option for single volume",
+            "ok": false
+        }

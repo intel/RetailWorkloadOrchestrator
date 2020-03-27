@@ -280,14 +280,39 @@ func maintainQuorum() error {
 			return fmt.Errorf("Error IP is not set ")
 		}
 
-		err = memberupdatex.JoinSwarm(serfAdvertiseIface, serfLeader, "manager")
-		time.Sleep(10 * time.Second)
-		if err != nil {
-			return fmt.Errorf("Node failed to join %v", swarmID)
+		//To handle Network Flapping
+		retry := 1
+		for retry < 4 {
+
+			err = memberupdatex.JoinSwarm(serfAdvertiseIface, serfLeader, "manager")
+			time.Sleep(10 * time.Second)
+
+			if err == nil {
+				break
+			}
+
+			if err != nil && retry >= 4 {
+				serfTagsOp := helpers.SetTempTag()
+				if serfTagsOp != nil {
+					rwolog.Error("Error in update tag, Inprocess ", serfTagsOp)
+					return serfTagsOp
+				}
+
+				serfTagsOp = helpers.DeleteSerfTag("temp")
+				if serfTagsOp != nil {
+					rwolog.Error("Error of in Deleting Tag, gluster: ", serfTagsOp)
+					return serfTagsOp
+				}
+
+				return fmt.Errorf("Node failed to join %v", swarmID)
+			}
+
+			retry++
+			time.Sleep(5 * time.Second) // To wait for leader node to update token
 		}
 
 		var removeDownNodes []string
-		retry := 1
+		retry = 1
 		for retry < 10 {
 
 			removeDownNodes, err = helpers.GetNodeIDByState("down")
@@ -437,12 +462,7 @@ func memberUpdateWorker() error {
 
 		if inspectManagerStatus == true {
 
-			serfTagsOp := helpers.SetSwarmTag("")
-			if serfTagsOp != nil {
-				rwolog.Error("Error in updating tag ", serfTagsOp)
-			}
-
-			serfTagsOp = helpers.SetRoleTag("leader")
+			serfTagsOp := helpers.SetRoleTag("leader")
 			if serfTagsOp != nil {
 				rwolog.Error("Error in updating tag ", serfTagsOp)
 			}
@@ -601,10 +621,6 @@ func main() {
 		statusRole = ""
 	}
 
-	statusSwarm, _ := os.LookupEnv("SERF_TAG_SWARM")
-	rwolog.Debug("value of statusSwarm ", statusSwarm)
-	rwolog.Debug("len of statusSwarm ", len(statusSwarm))
-
 	if len(statusRole) == 0 {
 		err := memberUpdateCheckAndSetTag()
 		if err != nil {
@@ -638,6 +654,10 @@ func main() {
 	rwolog.Debug("value of statusGluster:", statusGluster)
 	rwolog.Debug("len of statusGluster:", len(statusGluster))
 
+	statusSwarm, _ := os.LookupEnv("SERF_TAG_SWARM")
+	rwolog.Debug("value of statusSwarm ", statusSwarm)
+	rwolog.Debug("len of statusSwarm ", len(statusSwarm))
+
 	//Full path is given temporary, a function will be called when go is developed
 	if len(statusGluster) == 0 {
 		for {
@@ -645,8 +665,6 @@ func main() {
 			err := memberupdatex.Gluster()
 			if err != nil {
 				rwolog.Debug("Error in Executing Gluster ", err.Error())
-				helpers.RestartGlusterContainer()
-				time.Sleep(5 * time.Second)
 				rwolog.Debug("Retrying .......")
 			} else {
 				rwolog.Debug("Completed member-update.x  Gluster")
@@ -667,18 +685,18 @@ func main() {
 			}
 		}
 
-	} else { //Introduce one more flag to make sure arbiter is not call everytime
-		for {
+	} else {
+		for n := 1; n < 30; n++ {
 			rwolog.Debug("Executing member-update.x arbiter")
 			err := memberupdatex.Arbiter()
 			if err != nil {
 				rwolog.Error("Error in Executing arbiter ", err.Error())
 				rwolog.Error("Retrying .......")
+				time.Sleep(1 * time.Second)
 			} else {
 				rwolog.Debug("Completed member-update.x  arbiter")
 				break
 			}
 		}
 	}
-
 }

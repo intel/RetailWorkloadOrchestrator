@@ -59,7 +59,7 @@ func swarmLeaderInitStackDeploy(serfAdvertiseIface string) error {
 	_, err = os.Stat("/opt/stacks")
 	if os.IsNotExist(err) {
 		rwolog.Debug("/opt/stacks doesn't exist, Nothing to deploy")
-		return err
+		//Dont return error, If user does not want to deploy any stacks, This folder may not exists.
 	}
 
 	helpers.StackDeploy()
@@ -111,11 +111,17 @@ func JoinSwarm(serfAdvertiseIFACE string, serfLeader string, role string) error 
 		return err
 	}
 
-
 	err = helpers.SwarmJoin(serfLeader, swarmToken)
 
 	if err != nil {
 		rwolog.Error("Failed to Join the swarm")
+		return err
+	}
+	time.Sleep(1 * time.Second)
+
+	_, err = helpers.SerfQuery("docker", "cleanUpStaleMember")
+	if err != nil {
+		rwolog.Error("Error while querying swarm token to leader :", err)
 		return err
 	}
 

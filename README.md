@@ -76,7 +76,7 @@ RWO version components:
   ./build.sh
   ```
 
-  4. Install Demo Keys.  NOTE: These keys are published and should be used for demonstration purposes only.  Please refer to the [Production Installation](#production-installation) section to genereate unique keys.
+  4. Install Demo Keys.  NOTE: These keys are published and should be used for demonstration purposes only.  Please refer to the [Production Installation Guide](#production-installation-guide) section to genereate unique keys.
   ```bash
   ./install.sh demo
   ```

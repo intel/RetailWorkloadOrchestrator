@@ -6,9 +6,9 @@
 
 1. [Prerequisites](#prerequisites)
 
-1. [Quick Installation](#quick-installation)
+1. [Quick Installation Guide](#quick-installation-guide)
 
-1. [Production Installation](#production-installation)
+1. [Production Installation Guide](#production-installation-guide)
 
 ## Overview
 Retail Workload Orchestrator is a ZeroConfig Technology enable edge devices to scale like Lego blocks.  It is the set of open source services used to enable autonomous horizontally scaling of edge devices services to support Workload Orchestration.  As application workloads demand more resources, add Intel x86 hardware as Lego building blocks to the infrastructure.  Simply plug a machine into the network and walk away; the new system will auto configure itself, join the cluster and become an available resource for the application workloads.  This ZeroConfig architecture can provide high availability, distributed workloads, workload affinity to specific hardware, upgrade hardware with 24/7 uptime, and more.  The ZeroConfig architecture can simultaneously run Linux, Windows and Android applications across a heterogeneous infrastructure on Intel x86 Architecture from Celeron to Xeon in the same compute environment.
@@ -38,7 +38,24 @@ RWO version components:
   * Alpine Console
     * Management Console
 
-## Quick Installation
+
+## Prerequisites
+
+  * x86 Hardware or x86 Virtual Machine
+    * At Least 5 GB of Disk Space
+	* 4 GB of RAM
+  * Linux Distro that supports Docker
+  * `docker` 18.06.x or greater
+  * `docker-compose` v1.23.2 or greater
+  * `bash` v4.3.48 or greater
+
+*NOTE: SSH Service is not required as RWO will create one at Port 222. This value "PORT=(some alternate port number)", can be changed in /opt/rwo/compose/docker-compose.yml under the 'console:' service environment virables.  The option is to change the default Port number on the host.*
+
+* For [Quick Installation Guide](#quick-installation-guide)
+* For [Production Installation Guide](#production-installation-guide)
+* *For detail build steps*. [See this](docs/01_Install.md)
+
+## Quick Installation Guide
 
   1. Install Docker Compose
   ```bash
@@ -95,22 +112,7 @@ RWO version components:
 
   10. On another node repeat steps 1 through 4.  From Poratiner UI refresh the Swarm page to watch an aditional node be added.
 
-## Building RWO on your Linux Distro
-
-Prerequisites:
-  * x86 Hardware or x86 Virtual Machine
-    * At Least 5 GB of Disk Space
-	* 4 GB of RAM
-  * Linux Distro that supports Docker
-  * `docker` 18.06.x or greater
-  * `docker-compose` v1.23.2 or greater
-  * `bash` v4.3.48 or greater
-
-*NOTE: SSH Service is not required as RWO will create one. If SSH Service is running on Port 22 on the host you must add "PORT=(some alternate port number)" to /opt/rwo/compose/docker-compose.yml under the 'console:' service environment virables.  The option is to change the default Port number on the host.*
-
-*For steps to build and install*. [See this](docs/01_Install.md)
-
-## Production Installation
+## Production Installation Guide
 
   1. Clone this project to /opt/rwo
   ```bash
@@ -137,7 +139,7 @@ Prerequisites:
 
   4. Update compose/docker-compose.yml images to reflect your registry path.
 
-  5. Generate RWO Certifcates and Keys.  NOTE:  All Certifcates and Keys must be copied to all other nodes you plan to join this node. For more details, please refer to https://github.com/intel/RetailWorkloadOrchestrator/blob/master/docs/02_Security.md
+  5. Genereate RWO Certifcates and Keys.  NOTE:  All Certifcates and Keys must be copied to all other nodes you plan to join this node. For more details, please refer to https://github.com/intel/RetailWorkloadOrchestrator/blob/master/docs/02_Security.md
   ```bash
   ./generate_keys.sh
   ```

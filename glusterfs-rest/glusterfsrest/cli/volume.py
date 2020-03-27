@@ -183,3 +183,17 @@ def removebrickCommit(name, brickpath, replica=0):
     cmd += [brickpath, "commit"]
 
     return utils.checkstatuszero(cmd)
+
+def quorumtype(name,quorum_type):
+    if name and quorum_type :
+        cmd = VOLUME_CMD + ["set",name,"cluster.server-quorum-type",quorum_type]
+        return utils.checkstatuszero(cmd)
+    raise GlusterCliFailure("name or quorum type should not be empty")
+
+
+def quorumratio(quorum_type,quorum_ratio):
+    if quorum_type and quorum_ratio :
+        cmd = VOLUME_CMD + ["set","all","cluster."+quorum_type+"-quorum-ratio", quorum_ratio]
+        return utils.checkstatuszero(cmd)
+    raise GlusterCliFailure("quorum type or quorum ratio should not be empty")
+

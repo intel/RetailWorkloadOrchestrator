@@ -9,7 +9,7 @@ RemainAfterExit=yes
 StandardError=null
 StandardOutput=null
 WorkingDirectory=/opt/rwo/compose
-ExecStart=/opt/rwo/bin/startrwo.sh
+ExecStart=/bin/sh -c "if cat /etc/os-release | grep Clear > /dev/null; then sleep  $(awk \"BEGIN{print $((1 + RANDOM % 100)) / 10 + 40}\"); fi; /opt/rwo/bin/startrwo.sh"
 ExecStop=/opt/rwo/bin/stoprwo.sh
 
 [Install]

@@ -1,5 +1,10 @@
 ## Miscellaneous
 
+### Gluster Split-Brain
+
+Gluster can enter split brain in case of two members. RWO handles it in a way that if
+one of the two nodes is down for some time RWO will not allow `apps` to write to disk forsometime. That time interval can be changed through env variable `MEMBER_REBOOT_TIME_IN_SECS` in `/opt/rwo/compose/docker-compose.yml`.
+
 ### Open Ports
 
 This is a snapshot of ports used by running `RWO` service.

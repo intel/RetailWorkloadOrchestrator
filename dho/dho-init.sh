@@ -18,7 +18,11 @@ fi
 GPUS_PCI_ADDRESS=$(lspci | grep -i 'vga' | awk '{print $1}')
 for GPU_PCI_ADDRESS in ${GPUS_PCI_ADDRESS}; do
 	GPU=$(lspci -v -s ${GPU_PCI_ADDRESS} | grep Kernel | awk -F ': ' '{print $2}')
-	GRAPHICS="${GRAPHICS} \"graphics.$GPU=true\""
+	if [ "${GRAPHICS}" != "" ]; then
+		GRAPHICS="${GRAPHICS}, \"graphics.$GPU=true\""
+	else
+		GRAPHICS="\"graphics.$GPU=true\""
+	fi
 done
 
 if [ "${GPUS}" != "" ]; then
@@ -32,12 +36,23 @@ else
 	VT_ENABLED="false"
 fi
 
-echo -e "{
-	\"labels\": [\"system_type=${SYSTEM_TYPE}\", \"vt_enabled=${VT_ENABLED}\", \"manufacturer=${MANUFACTURER}\", \"product_name=${PRODUCT_NAME}\", \"serial_number=${SERIAL_NUMBER}\", \"sku_number=${SKU_NUMBER}\", \"family=${FAMILY}\", ${GRAPHICS}],
-	\"node-generic-resources\": [${VIDEO}]
-}" > /etc/docker/daemon.json
+if [ -f /etc/docker/daemon.json ] && [ ! -f /etc/docker/daemon.json.orig ] && [ ! -f /etc/docker/daemon_exists ]; then
+	cp /etc/docker/daemon.json /etc/docker/daemon.json.orig
+fi
 
-# until $FINISHED; do
-	# echo ""
-	# sleep 5
-# done
+if [ -f /etc/docker/daemon.json.orig ]; then
+	cp /etc/docker/daemon.json.orig /etc/docker/daemon.json 
+	sed -i 's|}||g' /etc/docker/daemon.json 
+	cat /etc/docker/daemon.json | sed 's|^.*labels.*||g' | sed 's|^.*node.*||g' | sed -e 's|^.*,.*$||g' | sed '/^[[:space:]]*$/d' > /etc/docker/temp
+	mv /etc/docker/temp /etc/docker/daemon.json 
+	echo -e "      ,
+      \"labels\": [\"system_type=${SYSTEM_TYPE}\", \"vt_enabled=${VT_ENABLED}\", \"manufacturer=${MANUFACTURER}\", \"product_name=${PRODUCT_NAME}\", \"serial_number=${SERIAL_NUMBER}\", \"sku_number=${SKU_NUMBER}\", \"family=${FAMILY}\", ${GRAPHICS}],
+      \"node-generic-resources\": [${VIDEO}]
+}" >> /etc/docker/daemon.json
+else
+	echo -e "{
+		\"labels\": [\"system_type=${SYSTEM_TYPE}\", \"vt_enabled=${VT_ENABLED}\", \"manufacturer=${MANUFACTURER}\", \"product_name=${PRODUCT_NAME}\", \"serial_number=${SERIAL_NUMBER}\", \"sku_number=${SKU_NUMBER}\", \"family=${FAMILY}\", ${GRAPHICS}],
+		\"node-generic-resources\": [${VIDEO}]
+	}" > /etc/docker/daemon.json
+	touch /etc/docker/daemon_exists
+fi

@@ -115,3 +115,19 @@ def peer_create(version, hostname):
 def peer_delete(version, hostname):
     force = get_post_data('force', False)
     return run_and_response(peer.detach, [hostname, force])
+
+
+@app.route("/api/<float:version>/volume/quorum/type", methods=["POST"])
+@requires_auth(['glusterroot', 'glusteradmin'])
+def volume_quorumtype(version):
+    vol_name = get_post_data('vol', '')
+    quorum_type = get_post_data('type', '')
+    return run_and_response(volume.quorumtype, [vol_name,quorum_type])
+
+
+@app.route("/api/<float:version>/volume/quorum/ratio", methods=["POST"])
+@requires_auth(['glusterroot', 'glusteradmin'])
+def volume_quorumratio(version):
+    quorum_type = get_post_data('type', '')
+    quorum_ratio = get_post_data('ratio', '')
+    return run_and_response(volume.quorumratio, [quorum_type,quorum_ratio])

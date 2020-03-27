@@ -8,11 +8,11 @@ SERF_CONFIG_FILE=${SERF_CONFIG_FILE?required}
 SERF_CONFIG_FILE_PATH=${SERF_CONFIG_DIR}/${SERF_CONFIG_FILE}
 
 # check if config file doesn't exist locally
-if [ ! -f $SERF_CONFIG_FILE_PATH ]; then
+if [ ! -f $SERF_CONFIG_FILE_PATH ]; then 
   # check if config file doesn't exist in usb-mount volume
   if [ -f ${SERF_VOLUME_CONFIG_PATH}/${SERF_CONFIG_FILE} ]; then
       cp ${SERF_VOLUME_CONFIG_PATH}/${SERF_CONFIG_FILE} ${SERF_CONFIG_DIR}
-  else
+  else    
     # conf was not copied over from the usb-mount volume and doesn't exist locally, create it
     touch ${SERF_CONFIG_FILE_PATH}
     key="$(serf keygen)"

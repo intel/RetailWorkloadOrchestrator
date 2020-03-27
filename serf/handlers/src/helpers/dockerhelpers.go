@@ -222,6 +222,26 @@ func CheckIfNodeExists(nodeName string) (string, error) {
 	return "", nil
 }
 
+// GetNumberofMembersinSwarm returns the number of nodes present in the docker cluster
+func GetNumberofMembersinSwarm() (int, error) {
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		rwolog.Error(err)
+		return 0, err
+	}
+	cli.NegotiateAPIVersion(context.Background())
+	defer cli.Close()
+
+	swarmNodes, err := cli.NodeList(context.Background(), types.NodeListOptions{})
+	if err != nil {
+		rwolog.Error(err)
+		return 0, err
+	}
+
+	return len(swarmNodes), nil
+}
+
 // GetNodeIDByState checks node Status and return list of IDs else error
 func GetNodeIDByState(nodeState string) ([]string, error) {
 
@@ -275,6 +295,51 @@ func GetNodeIDByStateAndHostname(nodeName string, nodeState string) (string, err
 		if swarmNode.Status.State == swarm.NodeState(nodeState) && swarmNode.Description.Hostname == nodeName {
 
 			return swarmNode.ID, nil
+		}
+	}
+
+	return "", nil
+}
+
+// GetNodeIDByDownState checks hostname with down & It returns node ID only if same hostname exists with ready state.
+func GetNodeIDByDownState() (string, error) {
+
+	var hostName string
+	var nodeID string
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		rwolog.Error(err)
+		return "", err
+	}
+
+	cli.NegotiateAPIVersion(context.Background())
+	defer cli.Close()
+
+	swarmNodes, err := cli.NodeList(context.Background(), types.NodeListOptions{})
+	if err != nil {
+		rwolog.Error(err)
+		return "", err
+	}
+
+	for _, swarmNode := range swarmNodes {
+
+		if swarmNode.Status.State == "down" {
+
+			hostName = swarmNode.Description.Hostname
+			nodeID = swarmNode.ID
+			break
+		}
+	}
+
+	if len(hostName) != 0 && len(nodeID) != 0 {
+		rwolog.Debug(hostName)
+		rwolog.Debug(nodeID)
+		for _, swarmNode := range swarmNodes {
+
+			if hostName == swarmNode.Description.Hostname && swarmNode.Status.State == "ready" {
+				return nodeID, nil
+			}
 		}
 	}
 
@@ -533,7 +598,8 @@ func GetToken(input string) (string, error) {
 // Hostname is passed as parameter
 func GetSystemDockerNode(name string) (string, error) {
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithHost("unix:///var/run/system-docker.sock"))
+	sock := getSystemDockerSock()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithHost(sock))
 	if err != nil {
 		rwolog.Error("failed to get client")
 		return "", err
@@ -561,8 +627,8 @@ func GetSystemDockerNode(name string) (string, error) {
 
 // RestartSystemDockerContainer will restart docker container.
 func RestartSystemDockerContainer(name string) error {
-
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithHost("unix:///var/run/system-docker.sock"))
+	sock := getSystemDockerSock()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithHost(sock))
 	if err != nil {
 		rwolog.Error("failed to get client", err.Error())
 		return err
@@ -598,7 +664,8 @@ func RestartSystemDockerContainer(name string) error {
 // GetAllSystemDockerNodes return the node ID for system-docker host by scanning all the non running containers.
 func GetAllSystemDockerNodes(name string) (string, error) {
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithHost("unix:///var/run/system-docker.sock"))
+	sock := getSystemDockerSock()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithHost(sock))
 	if err != nil {
 		rwolog.Error("failed to get client")
 		return "", err
@@ -626,9 +693,9 @@ func GetAllSystemDockerNodes(name string) (string, error) {
 
 // RemoveSystemDockerNode removes the node for system-docker host.
 func RemoveSystemDockerNode(ID string) error {
-
+	sock := getSystemDockerSock()
 	cli, err := client.NewClientWithOpts(client.FromEnv,
-		client.WithHost("unix:///var/run/system-docker.sock"))
+		client.WithHost(sock))
 
 	if err != nil {
 		rwolog.Error("Failed to create new client")
@@ -656,6 +723,7 @@ func RemoveSystemDockerNode(ID string) error {
 // RunArbiterContainer runs docker daemon as a container
 func RunArbiterContainer() error {
 
+	sock := getSystemDockerSock()
 	var cmd []string
 	cmd = append(cmd, "sh")
 	cmd = append(cmd, "-c")
@@ -664,7 +732,7 @@ func RunArbiterContainer() error {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv,
 		client.WithAPIVersionNegotiation(),
-		client.WithHost("unix:///var/run/system-docker.sock"))
+		client.WithHost(sock))
 
 	if err != nil {
 		rwolog.Error(err)
@@ -672,42 +740,65 @@ func RunArbiterContainer() error {
 	}
 	defer cli.Close()
 
-	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
+	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
 	if err != nil {
 		rwolog.Error(err)
-		return err
 	}
 
-	for _, Container := range containers {
-		rwolog.Debug(Container.ID[:10], Container.Image)
+	var containerCreated bool
+	containerCreated = false
 
-		if strings.Contains(Container.Image, "dind") {
+	for _, image := range images {
 
-			resp, err := cli.ContainerCreate(ctx, &container.Config{User: "root", Cmd: cmd,
-				NetworkDisabled: false, Hostname: "arbiter", Image: Container.Image,
-			}, &container.HostConfig{Privileged: true}, nil, "rwo_arbiter")
-			if err != nil {
-				rwolog.Error(err)
-				return err
-			}
-
-			if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-				rwolog.Error(err)
-				return err
-			}
+		if containerCreated {
 			break
 		}
 
+		rwolog.Debug(image.RepoTags)
+		tags := image.RepoTags
+		var image string
+
+		for i := 0; i < len(tags); i++ {
+			if strings.Contains(tags[i], "dind") {
+				image = tags[i]
+				resp, err := cli.ContainerCreate(ctx, &container.Config{User: "root", Cmd: cmd,
+					NetworkDisabled: false, Hostname: "arbiter", Image: image,
+				}, &container.HostConfig{Privileged: true}, nil, "rwo_arbiter")
+				if err != nil {
+					rwolog.Error(err)
+					return err
+				}
+
+				if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+					rwolog.Error(err)
+					return err
+				}
+				containerCreated = true
+				break
+			}
+		}
 	}
 	return nil
+}
+
+func getSystemDockerSock() string {
+	sock, _ := os.LookupEnv("SYSTEM_DOCKER_SOCK")
+
+	if len(sock) == 0 {
+		rwolog.Error("SYSTEM_DOCKER_SOCK is not defined in ENV. Setting up with default path.")
+		sock = "/opt/system-docker.sock"
+	}
+	return "unix://" + sock
+
 }
 
 // ExecuteProcessInNode executes the passed string inside a container for system-docker
 func ExecuteProcessInNode(ID string, cmd []string) (string, error) {
 
+	sock := getSystemDockerSock()
 	cli, err := client.NewClientWithOpts(client.FromEnv,
 		client.WithAPIVersionNegotiation(),
-		client.WithHost("unix:///var/run/system-docker.sock"))
+		client.WithHost(sock))
 
 	if err != nil {
 		rwolog.Error("Failed to create the client")
@@ -795,6 +886,38 @@ func RestartGlusterContainer() error {
 	err := RestartSystemDockerContainer("gluster-server")
 	if err != nil {
 		rwolog.Error("Error while restarting gluster container ID")
+	}
+	return nil
+}
+
+// RemoveDockerNodes Get the docker nodes which are down and remove then from swarm.
+func RemoveDockerNodes() error {
+
+	//remove all nodes which are down
+	node, err := GetNodeIDByState("down")
+	if err != nil {
+		rwolog.Debug("Error while retrieving the docker nodes which are down ", err.Error())
+		return err
+	}
+
+	for _, element := range node {
+		if len(element) > 0 {
+			rwolog.Debug("Removing member from docker swarm cluster " + element)
+
+			rwolog.Debug("DemoteNode " + element)
+			err = DemoteNode(element)
+			if err != nil {
+				rwolog.Debug("Error in demoting a docker member. ", err.Error())
+				//Do not return control back, If a leader goes down from the cluster, Docker will throw the error " Can't find manager in raft member list"
+			}
+
+			rwolog.Debug("RemoveNode " + element)
+			err := RemoveNode(element, true)
+			if err != nil {
+				rwolog.Debug("Error while removing docker node ", err.Error())
+				return err
+			}
+		}
 	}
 	return nil
 }

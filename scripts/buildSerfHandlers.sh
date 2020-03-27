@@ -37,7 +37,7 @@ lint_status_accumulated=0
 compile_updateconf() {
         echo "Compile updateconf.go"
         docker run --rm -e "GOPATH=/data/" -v ${SERF_PATH}/../../gluster:/data/src cytopia/golint -set_exit_status /data/src/updateconf.go
-        docker run --rm -e "CGO_ENABLED=0" -v ${SERF_PATH}/../../gluster:/data/src golang:latest go build -a -installsuffix cgo -o /data/src/updateconf /data/src/updateconf.go
+        docker run --rm -e "CGO_ENABLED=0" -v ${SERF_PATH}/../../gluster:/data/src golang:1.14.0 go build -a -installsuffix cgo -o /data/src/updateconf /data/src/updateconf.go
 }
 
 lint_handlers() {
@@ -70,9 +70,9 @@ compile_handlers() {
         OUTPUT=`echo ${file_in_src} | grep  "\.go" | awk -F"/" '{ print $NF}' | sed 's/.go//g'`
         mkdir -p ${SERF_PATH}/bin
 
-#        docker run --rm -e "GOPATH=/data/" -v ${SERF_PATH}:/data golang:latest go build -o /data/bin/${OUTPUT} /data/src/${file_in_src}
+#        docker run --rm -e "GOPATH=/data/" -v ${SERF_PATH}:/data golang:1.14.0 go build -o /data/bin/${OUTPUT} /data/src/${file_in_src}
 
-        docker run --rm -e "CGO_ENABLED=0" -v ${SERF_PATH}/.gopath/src/golang.org:/data/src/golang.org  -v ${SERF_PATH}/.gopath/src/github.com:/data/src/github.com -e "GOPATH=/data/" -v ${SERF_PATH}/../../glusterfs-lib/rwogluster:/data/src/rwogluster   -v ${SERF_PATH}/src/helpers:/data/src/helpers -v ${SERF_PATH}/src/member-update-x:/data/src/memberupdatex -v ${SERF_PATH}/bin:/data/bin -v ${SERF_PATH}/src:/data/serf golang:latest go build -a -installsuffix cgo -o /data/bin/${OUTPUT} /data/serf/${file_in_src}
+        docker run --rm -e "CGO_ENABLED=0" -v ${SERF_PATH}/.gopath/src/golang.org:/data/src/golang.org  -v ${SERF_PATH}/.gopath/src/github.com:/data/src/github.com -e "GOPATH=/data/" -v ${SERF_PATH}/../../glusterfs-lib/rwogluster:/data/src/rwogluster   -v ${SERF_PATH}/src/helpers:/data/src/helpers -v ${SERF_PATH}/src/member-update-x:/data/src/memberupdatex -v ${SERF_PATH}/bin:/data/bin -v ${SERF_PATH}/src:/data/serf golang:1.14.0 go build -a -installsuffix cgo -o /data/bin/${OUTPUT} /data/serf/${file_in_src}
 
         build_status=$?
         if [ $build_status -gt 0 ]; then
@@ -112,13 +112,13 @@ else
 mkdir -p ${SERF_PATH}/.gopath
 echo -e  "Downloading Packages.... ${T_RESET} "
 echo -e  "Do not abort ${T_RESET} "
-docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get golang.org/x/sys/unix
+docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get golang.org/x/sys/unix
 #echo -e  "${blue} GO ${T_OK_ICON} ${T_RESET} "
-docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get github.com/sirupsen/logrus
+docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/sirupsen/logrus
 #echo -e  "${blue} LOGRUS ${T_OK_ICON} ${T_RESET}"
-docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get github.com/hashicorp/serf/client
+docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/hashicorp/serf/client
 #echo -e  "${blue} SERF CLIENT ${T_OK_ICON} ${T_RESET}"
-docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:latest go get github.com/docker/docker
+docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/docker/docker
 # echo -e  "${blue} DOCKER CLIENT ${T_OK_ICON} ${T_RESET}"
 echo -e  "Begin Compilation ${T_RESET} "
 fi

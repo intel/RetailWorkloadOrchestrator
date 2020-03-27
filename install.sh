@@ -3,6 +3,8 @@
 # we want to have some checks done for undefined variables
 set -u
 
+TYPE=${1:-1}
+
 source "scripts/textutils.sh"
 
 if [ "${HTTP_PROXY+x}" != "" ]; then
@@ -15,17 +17,19 @@ else
 	export AWS_CLI_PROXY=""
 fi
 
-# Build GO serf handlers
-msg="Building GO Serf handlers, this can take a few minutes..."
+msg="Installing Systemd service..."
 printBanner $msg
 logMsg $msg
-./scripts/buildSerfHandlers.sh
+cp systemd/rwo.service /etc/systemd/system/
+ln -s /etc/systemd/system/rwo.service /etc/systemd/system/multi-user.target.wants/rwo.service
 
-# Build Retail WorkLoad Orchestrator
-msg="Building RWO, this can take a few minutes..."
-printBanner $msg
-logMsg $msg
-source "scripts/buildRWO.sh"
+if [ ${TYPE} == "demo" ]; then
+	mkdir -p /etc/ssl/rwo
+	echo '[ "b8+87a00D33FD704a9deB1+DAb5B7Df917DFf7f2172=" ]' > /etc/ssl/rwo/keyring.json
+	run "Installing certificates..." "cp demo_certs/* /etc/ssl/" 	${LOG_FILE}
+else
+	cp -a node_keys/* /etc/ssl/
+fi
 
-msg="Building Complete"
+msg="Run systemctl start rwo"
 printBanner $msg

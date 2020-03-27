@@ -124,18 +124,15 @@ func (r Client) VolumeExist(name string) (bool, error) {
 }
 
 func (r Client) volumes() ([]volume, error) {
-
 	api := fmt.Sprintf("/api/1.0/volumes")
 	u := fmt.Sprintf("%s%s", r.addr, api)
 
-	logrus.Debugf("GET %s", u)
-
 	res, err := r.sendRequest("GET", u, nil)
+
 	if err != nil {
 		logrus.Errorf("Error GET volumes, %s", err.Error())
 		return nil, err
 	}
-	defer res.Body.Close()
 
 	var d volumeResponse
 	if err := json.NewDecoder(res.Body).Decode(&d); err != nil {
@@ -433,9 +430,9 @@ func (r Client) AddBrick(vol string, b string, rep int, s int) error {
 	/*
 	   endpoints are not exposed in glusterrestd
 	   Custom Endpoint:
-		POST
-		api: /api/1.0/volume/:name/addbrick
-		params: { brick,replica,stripe,force}
+	   	POST
+	   	api: /api/1.0/volume/:name/addbrick
+	   	params: { brick,replica,stripe,force}
 	*/
 
 	api := fmt.Sprintf("/api/1.0/volume/%s/addbrick", vol)
@@ -471,9 +468,9 @@ func (r Client) RemoveBrick(vol, brick string, rep int) error {
 	/*
 	   endpoints are not exposed in glusterrestd
 	   Custom Endpoint:
-		POST
-		api: /api/1.0/volume/:name/removebrick
-		params: { brick,replica}
+	   	POST
+	   	api: /api/1.0/volume/:name/removebrick
+	   	params: { brick,replica}
 	*/
 
 	api := fmt.Sprintf("/api/1.0/volume/%s/removebrick", vol)
@@ -499,7 +496,82 @@ func (r Client) RemoveBrick(vol, brick string, rep int) error {
 	return responseCheck(resp)
 }
 
+// EnableServerQuorum specifies server quorum type for a particular volume
+func (r Client) EnableServerQuorum(vol string) error {
+
+	api := fmt.Sprintf("/api/1.0/volume/quorum/type")
+	u := fmt.Sprintf("%s%s", r.addr, api)
+	logrus.Debugf("POST %s", u)
+	quorumType := fmt.Sprintf("server")
+
+	params := url.Values{
+		"vol":  {vol},
+		"type": {quorumType},
+	}
+
+	logrus.Debugf("Params %s", params)
+
+	resp, err := r.sendRequest("POST", u, params)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return responseCheck(resp)
+}
+
+// SetServerQuorumratio specifies server quorum ratio for all the volumes.
+func (r Client) SetServerQuorumratio(ratio string) error {
+
+	api := fmt.Sprintf("/api/1.0/volume/quorum/ratio")
+	u := fmt.Sprintf("%s%s", r.addr, api)
+	logrus.Debugf("POST %s", u)
+
+	quorumType := fmt.Sprintf("server")
+
+	params := url.Values{
+		"type":  {quorumType},
+		"ratio": {ratio},
+	}
+
+	logrus.Debugf("Params %s", params)
+
+	resp, err := r.sendRequest("POST", u, params)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return responseCheck(resp)
+}
+
 func (r Client) sendRequest(reqType, URL string, params url.Values) (*http.Response, error) {
+	retry := 5 // Retry 5 times after EOF error
+
+	var res *http.Response
+	var err error
+
+	for retry > 0 {
+
+		res, err = r.sendRequestDefault(reqType, URL, params)
+		if err != nil {
+			// Look for EOF error
+			if strings.Contains(err.Error(), "EOF") {
+				retry--
+				if retry == 0 {
+					return nil, err
+				}
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			return nil, err
+		}
+		break
+	}
+	return res, err
+}
+
+func (r Client) sendRequestDefault(reqType, URL string, params url.Values) (*http.Response, error) {
 
 	var body *strings.Reader
 

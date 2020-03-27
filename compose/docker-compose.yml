@@ -1,6 +1,5 @@
 version: "3"
-  # networks:
-# main:
+
 volumes:
   docker_app_commands:
     driver: local
@@ -10,7 +9,6 @@ volumes:
     driver: local
   gluster_creds_vol:
     driver: local
-
   serf_vol:
     driver: local
 
@@ -22,7 +20,6 @@ services:
     restart: "no"
     volumes:
       - /etc/app-docker:/etc/docker
-      - /opt:/opt
 
   app-docker:
     image: edge/app-docker:1.0
@@ -57,9 +54,11 @@ services:
       - HTTP_PROXY
       - HTTPS_PROXY
       - NO_PROXY
+      - PORT=222
       - PATH=/usr/local/bin:/usr/app-local/bin:/opt/rwo/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
       - USERNAME=intel-admin
       - PASSWORD=Intel123!
+      - SYSTEM_DOCKER_SOCK=/opt/system-docker.sock
     ipc: host
     network_mode: host
     pid: host
@@ -67,12 +66,16 @@ services:
     restart: always
     userns_mode: host
     volumes:
+      - /dev:/dev:shared
       - docker_app_commands:/usr/local
       - docker_pid_vol:/var/run
       - gluster_database_vol:/var/lib/glusterd
-      - /var/run/docker.sock:/var/run/system-docker.sock
+      - /var/run/docker.sock:/opt/system-docker.sock
       - /mnt/fakevol:/mnt:shared
       - /mnt/glusterfs/docker-volumes:/var/lib/docker-volumes/gluster:shared
+      - /opt:/opt
+      - /var/log:/var/log:shared
+      - /:/host
     depends_on:
       - app-docker
       - serf-agent
@@ -89,7 +92,7 @@ services:
       - gluster-rest
 
   gluster-rest:
-    image: edge/glusterfs-rest:5
+    image: edge/glusterfs-rest:7
     command: ["--certfile","/etc/ssl/glusterrestd.pem" ,"--keyfile", "/etc/ssl/glusterrestd.key", "--ca-certs", "/etc/ssl/glusterfs.ca"]
     environment:
       - PORT=5000
@@ -97,7 +100,7 @@ services:
     restart: unless-stopped
     # privileged: true
     # ipc: host
-    # network_mode: host
+    network_mode: host
     # pid: host
     # userns_mode: host
     ports:
@@ -114,7 +117,7 @@ services:
       - app-docker
 
   gluster-server:
-    image: edge/glusterfs-rest:5
+    image: edge/glusterfs-rest:7
     entrypoint: dumb-init glusterd --no-daemon --pid-file=/var/run/glusterd.pid
     restart: unless-stopped
     privileged: true
@@ -137,7 +140,7 @@ services:
       - gluster-security-enabler
 
   gluster-plugin-install:
-    image: docker:19.03.0-dind
+    image: docker:19.03.0
     entrypoint: [sh, -c, /opt/rwo/gluster/gluster-plugin-install.sh]
     environment:
       - RWO_BASE_PATH=/opt/rwo
@@ -147,6 +150,7 @@ services:
       - TLS_KEY=/etc/ssl/plugin.key
       - TLS_CERT=/etc/ssl/plugin.pem
       - TLS_CACERT=/etc/ssl/glusterfs.ca
+      - SYSTEM_DOCKER_SOCK=/opt/system-docker.sock
     restart: "no"
     # ipc: host
     # network_mode: host
@@ -155,6 +159,7 @@ services:
     # userns_mode: host
     volumes:
       - docker_pid_vol:/var/run
+      - /var/run/docker.sock:/opt/system-docker.sock
       - /opt:/opt
       - /dev:/dev
       - gluster_creds_vol:/etc/rwo
@@ -209,9 +214,12 @@ services:
       - TLS_KEY=/etc/ssl/serfhandler.key
       - TLS_CERT=/etc/ssl/serfhandler.pem
       - TLS_CACERT=/etc/ssl/glusterfs.ca
-      - MEMBER_REBOOT_TIME=60
+      - MEMBER_REBOOT_TIME_IN_SECONDS=250
+      - SWARM_RESTORE_TIME_IN_SECONDS=60
       - LOG_LEVEL=1
-    command: agent -keyring-file /etc/ssl/rwo/keyring.json -tags-file=/opt/rwo/serf/data/tags.json -log-level=debug # -rejoin -snapshot /opt/rwo/serf/data/snapshot
+      - SYSTEM_DOCKER_SOCK=/opt/system-docker.sock
+      - UUID=${UUID}
+    command: agent -keyring-file /etc/ssl/rwo/keyring.json -tags-file=/opt/rwo/serf/data/tags.json # -log-level=debug # -rejoin -snapshot /opt/rwo/serf/data/snapshot
     restart: unless-stopped
     ipc: host
     network_mode: host
@@ -223,7 +231,7 @@ services:
       - docker_app_commands:/usr/app-local
       - docker_pid_vol:/var/run
       - serf_vol:/serf-volume
-      - /var/run/docker.sock:/var/run/system-docker.sock
+      - /var/run/docker.sock:/opt/system-docker.sock
       - gluster_creds_vol:/etc/rwo
       - /mnt:/mnt:shared
       - /mnt/glusterfs/docker-volumes:/var/lib/docker-volumes/gluster:shared
@@ -231,64 +239,9 @@ services:
       #  Uncomment the below line after keys are added
       #- /etc/ssl/glusterfs.ca:/etc/ssl/certs/rwo.crt
       - /etc/ssl:/etc/ssl
-      - /opt:/opt
+      - /opt/stacks/:/opt/stacks/
       - /var/log/rwo:/var/log
       - /dev/tty2:/dev/tty0
     depends_on:
       - app-docker
       - gluster-server
-
-  system-events:
-    image: docker:19.03.0-dind
-    entrypoint: [sh, -c, docker events | tee -a /dev/tty5]
-    restart: unless-stopped
-    # network_mode: host
-    # pid: host
-    # ipc: host
-    # userns_mode: host
-    devices:
-      - /dev/tty5
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-  app-events:
-    image: docker:19.03.0-dind
-    entrypoint: [sh, -c, docker events | tee -a /dev/tty3]
-    restart: unless-stopped
-    # network_mode: host
-    # pid: host
-    # ipc: host
-    # userns_mode: host
-    devices:
-      - /dev/tty3
-    volumes:
-      - docker_pid_vol:/var/run
-    depends_on:
-      - app-docker
-
-  serf-events:
-    image: edge/serf:0.8.4
-    entrypoint: [sh, -c, serf monitor | tee -a /dev/tty3]
-    restart: unless-stopped
-    # ipc: host
-    network_mode: host
-    # pid: host
-    # userns_mode: host
-    devices:
-      - /dev/tty3
-    depends_on:
-      - serf-agent
-
-      # usb-mount:
-      # image: edge/usbmount:0.1
-      # entrypoint: /usb_mount_script.sh
-      # environment:
-      # - SERF_CONFIG_FILE=000-config.json
-      # - SERF_CONFIG_DEST_DIR=/serf-volume
-      # - SERF_CONFIG_DIR_MNT=/mnt/host_usb_drive
-      # restart: on-failure
-      # privileged: true
-      # volumes:
-      # - serf_vol:/serf-volume
-      # depends_on:
-      # - serf-agent

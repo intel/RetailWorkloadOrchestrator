@@ -8,4 +8,4 @@ services:
     image: debian
     command: "touch /mnt/hello.txt"
     volumes:
-      - vol16:/mnt/
+      - vol16:/mnt/   

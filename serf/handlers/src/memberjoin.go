@@ -71,6 +71,11 @@ func checkGlusterStatus() error {
 			return err
 		}
 
+		if len(glusterPL) == 0 {
+			rwolog.Debug("No leader is present, returning from memberjoin for gluster")
+			return nil
+		}
+
 		//If gluster is part of previous swarm, return
 		if strings.Contains(glusterPL, glusterUUID) {
 			rwolog.Error("Current Member is a part of existing Gluster, Gluster Tag will not be removed.")
@@ -134,6 +139,11 @@ func checkSwarmStatus() error {
 	if err != nil {
 		rwolog.Error("Error in executing docker node ls")
 		return err
+	}
+
+	if len(serfOutput) == 0 {
+		rwolog.Debug("No leader is present, returning from memberjoin for swarm")
+		return nil
 	}
 
 	//Get Swarm Node ID.
@@ -364,6 +374,72 @@ func memberJoinManageLeaderWorker() error {
 		}
 	}
 
+	//Resolve conflicts between two leaders; when there are more number then 2 nodes
+	if statusRole == "leader" && countLeaderMembers > 1 && aliveMembers > 2 {
+
+		rwolog.Debug("Handling of two leaders when alive members greater then 2")
+
+		if inspectManagerStatus == true {
+
+			//check for number of nodes in the docker cluster
+			numberOfNodes, err := helpers.GetNumberofMembersinSwarm()
+			if err != nil {
+				rwolog.Error("Error: DockerD is not running. Please restart the node.")
+				return err
+			}
+
+			rwolog.Debug("Number of nodes in the docker cluster:", numberOfNodes)
+
+			if numberOfNodes == 1 {
+
+				time.Sleep(5 * time.Second)
+				err := helpers.SwarmLeave(true)
+				if err != nil {
+					rwolog.Error("Failed to leave the node:", err)
+					return err
+				}
+				time.Sleep(10 * time.Second)
+
+				//Delete tag Swarm
+				serfTagsOp := helpers.DeleteSerfTag("swarm")
+				if serfTagsOp != nil {
+					rwolog.Error("Error in deleting init tag: ", serfTagsOp)
+					return serfTagsOp
+				}
+
+				//Update Gluster
+				err = checkGlusterStatus()
+				if err != nil {
+					rwolog.Error("Gluster Status Failed ", err.Error())
+					return err
+				}
+
+				//setInit Time
+				serfTagsOp = helpers.SetInitTag(strconv.Itoa(int(time.Now().UnixNano())))
+				if serfTagsOp != nil {
+					rwolog.Error("Error in update tag, Init ", serfTagsOp)
+					return serfTagsOp
+				}
+
+				//Set Worker Tag
+				serfTagsOp = helpers.SetRoleTag("worker")
+				if serfTagsOp != nil {
+					rwolog.Error("Error in update tag, Role ", serfTagsOp)
+					return serfTagsOp
+				}
+
+				//Set InProcess Tag
+				serfTagsOp = helpers.SetInProcessTag("true")
+				if serfTagsOp != nil {
+					rwolog.Error("Error in update tag, Inprocess ", serfTagsOp)
+					return serfTagsOp
+				}
+
+				return nil
+			}
+		}
+	}
+
 	if inspectManagerStatus == true {
 		rwolog.Debug("I am already the leader")
 		return nil
@@ -449,6 +525,7 @@ func main() {
 
 	//Fresh state Assign leader/Worker
 	if len(serfContext.GlusterTag) == 0 && len(serfContext.SwarmTag) == 0 {
+		time.Sleep(5 * time.Second) //Network Discovery for serf members
 		err := memberJoinAssignLeaderWorker()
 		if err == nil {
 			rwolog.Debug("Leader or worker is assigned")
@@ -478,6 +555,19 @@ func main() {
 			return
 		}
 
+	}
+
+	//To handle network flapping
+	serfTagsOp := helpers.SetTempTag()
+	if serfTagsOp != nil {
+		rwolog.Error("Error in update tag, Inprocess ", serfTagsOp)
+		return
+	}
+
+	serfTagsOp = helpers.DeleteSerfTag("temp")
+	if serfTagsOp != nil {
+		rwolog.Error("Error of in Deleting Tag, gluster: ", serfTagsOp)
+		return
 	}
 
 }

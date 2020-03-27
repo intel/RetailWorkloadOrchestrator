@@ -71,7 +71,13 @@ RWO version components:
 
   6. Confirm all services are running. (It will take 2 minutes for all services to start)
   ```bash
-  docker ps
+  ~# docker ps
+  CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS              PORTS               NAMES
+  d36940c44e3e        edge/console-alpine:1.0   "dumb-init /bin/init"    21 seconds ago      Up 20 seconds                           rwo_console_1
+  253f6246488a        edge/serf:0.8.4           "/opt/rwo/serf/docke…"   22 seconds ago      Up 21 seconds                           rwo_serf-agent_1
+  33034bedfce1        edge/glusterfs-rest:7     "dumb-init glusterd …"   22 seconds ago      Up 21 seconds                           rwo_gluster-server_1
+  a9c3989f3dda        edge/glusterfs-rest:7     "dumb-init /bin/init…"   25 seconds ago      Up 24 seconds                           rwo_gluster-rest_1
+  99ca764a1a5e        edge/app-docker:1.0       "app-docker.sh /usr/…"   26 seconds ago      Up 25 seconds                           rwo_app-docker_1
   ```
 
   7. Enter the RWO Console
@@ -85,7 +91,7 @@ RWO version components:
   docker stack deploy --compose-file=portainer-agent-stack.yml portainer
   ```
 
-  9. Get the IP address of this a node and connect to Portainer at `<IP Address>:9000`.  Create a username and password.  Once logged in, click the "Primary" endpoint below and go to the "Swarm" link on the left navigation panel.
+  9. Get the IP address of this node and connect to Portainer at `<IP Address>:9000`.  Create a username and password.  Once logged in, click the "Primary" endpoint below and go to the "Swarm" link on the left navigation panel.
 
   10. On another node repeat steps 1 through 4.  From Poratiner UI refresh the Swarm page to watch an aditional node be added.
 

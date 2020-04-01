@@ -57,36 +57,48 @@ RWO version components:
 
 ## Quick Installation Guide
 
-  1. Install Docker Compose
+  1. ALL the following commands must run as ROOT.  Type `sudo su -` and the your password before proceeding.
+
+  ```bash
+  sudo su -
+  ```
+
+  2. Install Docker Compose
+
   ```bash
   mkdir -p /usr/local/bin
   wget -O /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)"
   chmod a+x /usr/local/bin/docker-compose
   ```
   
-  2. Clone this project to /opt/rwo
+  3. Clone this project to /opt/rwo
+
   ```bash
   cd /opt
   git clone https://github.com/intel/RetailWorkloadOrchestrator.git rwo
   ```
 
-  3. Build the container images
+  4. Build the container images
+
   ```bash
   cd /opt/rwo
   ./build.sh
   ```
 
-  4. Install Demo Keys.  NOTE: These keys are published and should be used for demonstration purposes only.  Please refer to the [Production Installation Guide](#production-installation-guide) section to genereate unique keys.
+  5. Install Demo Keys.  NOTE: These keys are published and should be used for demonstration purposes only.  Please refer to the [Production Installation Guide](#production-installation-guide) section to genereate unique keys.
+
   ```bash
   ./install.sh demo
   ```
 
-  5. Start RWO
+  6. Start RWO
+
   ```bash
   systemctl start rwo
   ```
 
-  6. Confirm all services are running. (It will take 2 minutes for all services to start)
+  7. Confirm all services are running. (It will take 2 minutes for all services to start)
+
   ```bash
   ~# docker ps
   CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS              PORTS               NAMES
@@ -97,20 +109,22 @@ RWO version components:
   99ca764a1a5e        edge/app-docker:1.0       "app-docker.sh /usr/…"   26 seconds ago      Up 25 seconds                           rwo_app-docker_1
   ```
 
-  7. Enter the RWO Console
+  8. Enter the RWO Console
+
   ```bash
   docker exec -it rwo_console_1 bash
   ```
 
-  8. Install Portainer.io Management
+  9. Install Portainer.io Management
+  
   ```bash
   curl -L https://downloads.portainer.io/portainer-agent-stack.yml -o portainer-agent-stack.yml
   docker stack deploy --compose-file=portainer-agent-stack.yml portainer
   ```
 
-  9. Get the IP address of this node and connect to Portainer at `<IP Address>:9000`.  Create a username and password.  Once logged in, click the "Primary" endpoint below and go to the "Swarm" link on the left navigation panel.
+  10. Get the IP address of this node and connect to Portainer at `<IP Address>:9000`.  Create a username and password.  Once logged in, click the "Primary" endpoint below and go to the "Swarm" link on the left navigation panel.
 
-  10. On another node repeat steps 1 through 4.  From Poratiner UI refresh the Swarm page to watch an aditional node be added.
+  11. On another node repeat steps 1 through 4.  From Poratiner UI refresh the Swarm page to watch an aditional node be added.
 
 ## Production Installation Guide
 

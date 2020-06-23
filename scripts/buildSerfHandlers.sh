@@ -117,8 +117,12 @@ docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.go
 docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/sirupsen/logrus
 #echo -e  "${blue} LOGRUS ${T_OK_ICON} ${T_RESET}"
 docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/hashicorp/serf/client
+
+docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 bash -c "cd /data/src/github.com/hashicorp/serf/client && git checkout v0.8.4"
 #echo -e  "${blue} SERF CLIENT ${T_OK_ICON} ${T_RESET}"
 docker run --net=host	 --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 go get github.com/docker/docker
+
+docker run --net=host    --rm -e "GOPATH=/data/" ${PROXY_ARGS} -v ${SERF_PATH}/.gopath:/data/ golang:1.14.0 bash -c "cd /data/src/github.com/docker/docker && git checkout v19.03.4"
 # echo -e  "${blue} DOCKER CLIENT ${T_OK_ICON} ${T_RESET}"
 echo -e  "Begin Compilation ${T_RESET} "
 fi

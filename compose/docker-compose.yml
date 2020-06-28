@@ -56,8 +56,8 @@ services:
       - NO_PROXY
       - PORT=222
       - PATH=/usr/local/bin:/usr/app-local/bin:/opt/rwo/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
-      - USERNAME=intel-admin
-      - PASSWORD=Intel123!
+      - USERNAME=sys-admin
+      - PASSWORD=P@ssw0rd!
       - SYSTEM_DOCKER_SOCK=/opt/system-docker.sock
     ipc: host
     network_mode: host

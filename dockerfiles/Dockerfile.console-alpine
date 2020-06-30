@@ -9,6 +9,7 @@ RUN set -x \
 	   dumb-init \
 	   bash \
 	   curl \
+	   rsync \
 	&& mkdir -p /var/run/sshd \
 	&& mkdir -p /etc/ssh
 	

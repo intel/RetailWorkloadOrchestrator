@@ -1,7 +1,7 @@
 version: "3.3"
 volumes:
   vol16:
-    driver: hub.docker.intel.com/rrp/plugin-gluster:client
+    driver: edge/plugin-gluster:1.0
     driver_opts: {}
 services:
   debian:

@@ -3,55 +3,30 @@
 # Cleanup Function
 perform_umount()
 {
+       echo " performing umount of mountpoints at /var/lib/docker/volumes/ ."
+       for x in $(find /var/lib/docker/volumes/);
+       do  if  mountpoint -q $x
+       then
+              echo "umount: "$x
+              umount $x
+       fi
+       done
+       echo " performing umount of mountpoints at /var/lib/docker/volumes/ Completed."
 
-echo " performing umount of mountpoints at /var/lib/docker/volumes/ ."
-for x in $(find /var/lib/docker/volumes/);
-do  if  mountpoint -q $x
-    then
-       echo "umount: "$x
-       umount $x
-     fi
-done
-echo " performing umount of mountpoints at /var/lib/docker/volumes/ Completed."
+       echo " performing umount of mountpoints at systemctl."
+       for x in $(systemctl | grep app-docker | awk {'print $5'});
+       do  
+              echo "umount: "$x
+              revlist="$x $revlist"
+              umount $x
+       done
 
-echo " performing umount of mountpoints at systemctl."
-for x in $(systemctl | grep app-docker | awk {'print $5'});
-do  
-       echo "umount: "$x
-       revlist="$x $revlist"
-       umount $x
-done
-
-for x in $revlist;
-do  
-       echo "umount: "$x
-       umount $x
-done
-echo " performing umount of mountpoints at systemctl. Completed."
-
-echo "Removing  /var/lib/app-docker/ "
-
-# Try to remove app-docker from /var/lib/app-docker.
-# Catpure the errors in errors.txt.
-
-rm -rf /var/lib/app-docker >/opt/rwo/bin/errors.txt 2>&1
-error="/opt/rwo/bin/errors.txt"
-
-# Read the errors.txt get the mount path one by one.
-# Umount each path by replacing special characters from path.
-while IFS= read -r line
-do
-       path=$(echo $line | awk {'print $4'} | sed  "s/'://g" | sed "s/'//g")  
-       echo "umounting $path"
-       umount $path
-done < $error
-
-# Resume removing of app-docker.
-# Display remaining errors.
-rm -rf /var/lib/app-docker >/opt/rwo/bin/errors.txt 2>&1 
-cat /opt/rwo/bin/errors.txt
-
-echo " removing var/lib/app-docker/  Completed."
+       for x in $revlist;
+       do  
+              echo "umount: "$x
+              umount $x
+       done
+       echo " performing umount of mountpoints at systemctl. Completed."
 }
 
 echo "Performing Cleanup in RWO Serf Agent"
@@ -59,10 +34,11 @@ docker exec rwo_serf-agent_1 sh /opt/rwo/bin/resetconsole
 echo "RWO serf agent cleanup completed"
 
 echo "Performing Unmount of all the mountpoints"
-for x in $(ls /mnt/); do umount /mnt/$x > /dev/null 2>&1; done
-rm -fr /mnt/* && \
 /opt/rwo/bin/stoprwo.sh && \
+for x in $(ls /mnt/); do umount /mnt/$x > /dev/null 2>&1; done && \
+rm -fr /mnt/* && \
 perform_umount
+sleep 3
 perform_umount
 echo "Performing Unmount of all the mountpoints completed."
 
@@ -82,9 +58,10 @@ docker volume prune --force > /dev/null 2>&1 && \
 echo "Performing docker volume prune completed."
 
 echo "Restoring App-Docker from /opt/rwo."
-rsync -a /opt/rwo/app-docker/ /var/lib/app-docker/
+docker run -it --rm --entrypoint="" -v /opt:/opt -v /var/lib/app-docker:/tmp/app-docker edge/console-alpine:1.0 rsync -a --delete --delete-after /opt/rwo/app-docker/ /tmp/app-docker/
 echo "Restoring App-Docker completed."
-
+echo ""
+echo ""
+echo ""
 echo "RWO Reset complete.  Run 'systemctl start rwo' to start the service."
-
-
+echo ""

@@ -17,15 +17,15 @@ fi
 
 # Build GO serf handlers
 msg="Building GO Serf handlers, this can take a few minutes..."
-printBanner $msg
-logMsg $msg
+printBanner "$msg
+logMsg "$msg
 ./scripts/buildSerfHandlers.sh
 
 # Build Retail WorkLoad Orchestrator
 msg="Building RWO, this can take a few minutes..."
-printBanner $msg
-logMsg $msg
+printBanner "$msg
+logMsg "$msg
 source "scripts/buildRWO.sh"
 
 msg="Building Complete"
-printBanner $msg
+printBanner "$msg

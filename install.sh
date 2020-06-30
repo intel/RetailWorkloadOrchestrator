@@ -18,8 +18,8 @@ else
 fi
 
 msg="Installing Systemd service..."
-printBanner $msg
-logMsg $msg
+printBanner "$msg"
+logMsg "$msg"
 cp systemd/rwo.service /etc/systemd/system/
 ln -s /etc/systemd/system/rwo.service /etc/systemd/system/multi-user.target.wants/rwo.service
 
@@ -31,5 +31,21 @@ else
 	cp -a node_keys/* /etc/ssl/
 fi
 
+msg="Installing App Docker Images..."
+printBanner "$msg"
+logMsg "$msg"
+if (! docker ps | grep app-docker > /dev/null); then
+	docker run -d --privileged --name app-docker -v /var/lib/app-docker:/var/lib/docker -v /var/run:/opt/run docker:19.03.0-dind
+	while (! docker exec -i app-docker docker ps > /dev/null 2>&1 ); do sleep 0.5; done
+  docker exec -i app-docker sh -c 'docker -H unix:///opt/run/docker.sock save $(docker -H unix:///opt/run/docker.sock images --format "{{.Repository}}:{{.Tag}}" | grep glusterfs-plugin) | docker load'
+	docker stop app-docker
+	docker rm app-docker
+	docker run -it --rm --entrypoint="" -v /opt:/opt -v /var/lib/app-docker:/tmp/app-docker edge/console-alpine:1.0 rsync -a /tmp/app-docker/ /opt/rwo/app-docker/
+fi
+
+echo ""
+echo ""
+echo ""
 msg="Run systemctl start rwo"
-printBanner $msg
+printBanner "$msg"
+echo ""

@@ -10,6 +10,7 @@ RUN set -x \
 	   bash \
 	   curl \
 	   rsync \
+	   util-linux \
 	&& mkdir -p /var/run/sshd \
 	&& mkdir -p /etc/ssh
 	

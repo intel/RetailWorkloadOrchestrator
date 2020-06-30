@@ -28,4 +28,4 @@ logMsg "$msg
 source "scripts/buildRWO.sh"
 
 msg="Building Complete"
-printBanner "$msg
+printBanner "$msg"

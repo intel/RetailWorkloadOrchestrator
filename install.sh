@@ -4,6 +4,7 @@
 set -u
 
 TYPE=${1:-1}
+APP_INSTALL=${2:-1}
 
 source "scripts/textutils.sh"
 
@@ -34,7 +35,10 @@ fi
 msg="Installing App Docker Images..."
 printBanner "$msg"
 logMsg "$msg"
-if (! docker ps | grep app-docker > /dev/null); then
+if [ ${APP_INSTALL} == "skip" ]; then
+	msg="Skipping Installing App Docker Images"
+	printBanner "$msg"
+else
 	docker run -d --privileged --name app-docker -v /var/lib/app-docker:/var/lib/docker -v /var/run:/opt/run docker:19.03.0-dind
 	while (! docker exec -i app-docker docker ps > /dev/null 2>&1 ); do sleep 0.5; done
   docker exec -i app-docker sh -c 'docker -H unix:///opt/run/docker.sock save $(docker -H unix:///opt/run/docker.sock images --format "{{.Repository}}:{{.Tag}}" | grep glusterfs-plugin) | docker load'

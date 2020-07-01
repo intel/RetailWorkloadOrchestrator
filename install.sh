@@ -45,6 +45,9 @@ else
 	docker stop app-docker
 	docker rm app-docker
 	docker run -it --rm --entrypoint="" -v /opt:/opt -v /var/lib/app-docker:/tmp/app-docker edge/console-alpine:1.0 rsync -a /tmp/app-docker/ /opt/rwo/app-docker/
+	docker pull harbur/haveged:latest
+  docker pull docker:19.03.0
+	docker pull docker:19.03.0-dind
 fi
 
 echo ""

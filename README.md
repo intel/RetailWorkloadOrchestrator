@@ -124,7 +124,7 @@ RWO version components:
 
   10. Get the IP address of this node and connect to Portainer at `<IP Address>:9000`.  Create a username and password.  Once logged in, click the "Primary" endpoint below and go to the "Swarm" link on the left navigation panel.
 
-  11. On another node repeat steps 1 through 4.  From Poratiner UI refresh the Swarm page to watch an aditional node be added.
+  11. On another node repeat steps 1 through 7.  From Poratiner UI refresh the Swarm page to watch an aditional node be added.
 
 ## Production Installation Guide
 

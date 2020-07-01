@@ -4,6 +4,10 @@ set -u
 
 cd dockerfiles/
 
+run "Pulling Base Docker Images" \
+	"docker pull docker:19.03.0 && docker pull docker:19.03.0-dind" \ 
+	${LOG_FILE} # Needed for the Arbiter
+
 run "(1/7) Building Docker Image RWO Alpine Console" \
 	"docker build --rm ${DOCKER_BUILD_ARGS} -t edge/console-alpine:1.0 -f ./Dockerfile.console-alpine ." \
 	${LOG_FILE}

@@ -1,5 +1,5 @@
 FROM docker:19.03.0-dind
-MAINTAINER Bryan J Rodriguez <bryan.j.rodriguez@intel.com>
+LABEL maintainer Bryan J Rodriguez <bryan.j.rodriguez@intel.com>
 
 RUN set -x \
 	&& apk add --no-cache \

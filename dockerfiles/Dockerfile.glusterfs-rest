@@ -1,5 +1,5 @@
 FROM edge/glusterfs:7
-MAINTAINER Bryan J Rodriguez <bryan.j.rodriguez@intel.com>
+LABEL maintainer Bryan J Rodriguez <bryan.j.rodriguez@intel.com>
 
 ARG GLUSTERREST_PASSWORD="password"
 

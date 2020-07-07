@@ -31,7 +31,10 @@ if [ -z "${SERF_ADVERTISE_HOST}" ] || [ "${SERF_ADVERTISE_HOST}" = "0.0.0.0" ]; 
         # SERF_ADVERTISE_IFACE=$(ip -o -4 addr list | grep -v docker | grep global | awk '{print $2}'| head -n1)
         SERF_ADVERTISE_IFACE=$(ip route show 0.0.0.0/0 | awk '{print $5}')
     fi
-    SERF_ADVERTISE_HOST=$(ip -o -4 addr list ${SERF_ADVERTISE_IFACE} | head -1 | awk '{print $4}' | cut -d/ -f1)
+    for LAN in ${SERF_ADVERTISE_IFACE}; do
+        SERF_ADVERTISE_HOST=$(ip -o -4 addr list ${LAN} | head -1 | awk '{print $4}' | cut -d/ -f1)
+        break
+    done
 else
     SERF_ADVERTISE_IFACE=$(ip -o -4 addr list | grep ${SERF_ADVERTISE_HOST} | head -1 | awk '{print $2}')
 fi

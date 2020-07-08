@@ -106,7 +106,8 @@ RWO version components:
   253f6246488a        edge/serf:0.8.4           "/opt/rwo/serf/docke…"   22 seconds ago      Up 21 seconds                           rwo_serf-agent_1
   33034bedfce1        edge/glusterfs-rest:7     "dumb-init glusterd …"   22 seconds ago      Up 21 seconds                           rwo_gluster-server_1
   a9c3989f3dda        edge/glusterfs-rest:7     "dumb-init /bin/init…"   25 seconds ago      Up 24 seconds                           rwo_gluster-rest_1
-  99ca764a1a5e        edge/app-docker:1.0       "app-docker.sh /usr/…"   26 seconds ago      Up 25 seconds                           rwo_app-docker_1
+  99ca764a1a5e        edge/app-docker:1.0       "app-docker.sh /usr/…"   26 seconds ago      Up 26 seconds                           rwo_app-docker_1
+  3a7fddeed1e7        edge/rngd:1.0             "haveged -F"             26 seconds ago      Up 26 seconds                           rwo_rngd
   ```
 
   8. Enter the RWO Console
@@ -115,7 +116,7 @@ RWO version components:
   docker exec -it rwo_console_1 bash
   ```
 
-  9. Install Portainer.io Management
+  9. Install Portainer.io Management.  NOTE:  The following command MUST run inside the RWO Console from step 8.
   
   ```bash
   curl -L https://downloads.portainer.io/portainer-agent-stack.yml -o portainer-agent-stack.yml

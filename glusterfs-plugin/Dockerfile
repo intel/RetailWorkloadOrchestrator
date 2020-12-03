@@ -1,4 +1,4 @@
-FROM golang AS build-env
+FROM golang:1.14.0 AS build-env
 
 COPY . /go/src/app
 

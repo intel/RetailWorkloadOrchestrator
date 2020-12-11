@@ -22,7 +22,7 @@ msg="Installing Systemd service..."
 printBanner "$msg"
 logMsg "$msg"
 cp systemd/rwo.service /etc/systemd/system/
-ln -s /etc/systemd/system/rwo.service /etc/systemd/system/multi-user.target.wants/rwo.service
+ln -s /etc/systemd/system/rwo.service /etc/systemd/system/default.target.wants/rwo.service
 
 if [ ${TYPE} == "demo" ]; then
 	mkdir -p /etc/ssl/rwo

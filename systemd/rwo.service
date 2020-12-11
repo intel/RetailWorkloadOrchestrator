@@ -13,4 +13,4 @@ ExecStart=/bin/sh -c "if cat /etc/os-release | grep Clear > /dev/null; then slee
 ExecStop=/opt/rwo/bin/stoprwo.sh
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

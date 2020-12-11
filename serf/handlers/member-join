@@ -1,4 +1,4 @@
 #!/bin/sh
 echo "******** Running serf member-join ********"
-./opt/rwo/serf/handlers/bin/memberjoin
+/opt/rwo/serf/handlers/bin/memberjoin
 # serf/handlers/member-join

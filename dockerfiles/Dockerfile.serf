@@ -1,20 +1,18 @@
-FROM alpine:3.9 as hashibase
+FROM alpine:3.12 as hashibase
 LABEL maintainer Bryan J Rodriguez <bryan.j.rodriguez@intel.com>
 
 RUN set -x \
  && apk add --no-cache \
     gnupg \
+    git \
+    go \
+    libc-dev \
  && gpg --version
 
-ARG HASHICORP_FINGERPRINT=91a6e7f85d05c65630bef18951852d87348ffc4c
-
-ADD https://keybase.io/hashicorp/pgp_keys.asc?fingerprint=${HASHICORP_FINGERPRINT} /gpg/import/hashicorp.asc
-
-RUN gpg --import /gpg/import/hashicorp.asc
-
-RUN apk add git
-RUN apk add go
-RUN apk add libc-dev
+# Following Key is no longer valid
+#ARG HASHICORP_FINGERPRINT=91a6e7f85d05c65630bef18951852d87348ffc4c
+#ADD https://keybase.io/hashicorp/pgp_keys.asc?fingerprint=${HASHICORP_FINGERPRINT} /gpg/import/hashicorp.asc
+#RUN gpg --import /gpg/import/hashicorp.asc
 
 WORKDIR /tmp
 
@@ -23,7 +21,7 @@ RUN cd serf/ && git checkout v0.8.4
 RUN cd serf/cmd/serf && go build
 RUN cp serf/cmd/serf/serf /usr/local/bin
 
-FROM alpine:3.9
+FROM alpine:3.12
 
 ARG SERF_GID=7946
 ARG SERF_UID=7373
